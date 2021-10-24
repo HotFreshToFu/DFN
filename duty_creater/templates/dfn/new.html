@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>이달의 듀티 스케쥴</h1>
+
+<table class="table">
+  <thead>
+    <tr>
+        <th colspan="4">1팀의 한달 스케쥴</th>
+    </tr>
+    <tr>
+        <td></td>
+        <td>DAY</td>
+        <td>EVENING</td>
+        <td>NIGHT</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for duties in duties_of_day %}
+    <tr>
+      <td>날짜</td>
+      {% for nurse in duties %}
+        <td>{{ nurse }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% for duty in duties_of_day %}
+<p>{{ duty }}</p>
+{% endfor %}
+<p>{{ duties_of_day }}</p>
+
+
+
+{% for duty in duties_of_month %}
+<p>{{ duty }}</p>
+{% endfor %}
+<p>{{ duties_of_month }}</p> 
+
+{% endblock content %}
+{% comment %} 
+    table,
+    td {
+        border: 1px solid #333;
+        padding: 10px
+    }
+
+    thead,
+    tfoot {
+        background-color: #333;
+        color: #fff;
+    }
+
+    duty1 {
+      background-color: black;
+    }
+{% endcomment %}
+
+

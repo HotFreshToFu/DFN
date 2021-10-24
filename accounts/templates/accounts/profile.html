@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ profile.name }} 간호사의 프로필</h1>
+<hr>
+<p>경력: {{ WEX }}년</p>
+<p>만 나이: {{ age }}세</p>
+<p>등급?: {{ profile.level }}</p>
+<p>사용한 연차 수: {{ profile.PTO }}</p>
+<p>팀: {{ profile.team }}</p>
+<p>OFF 수: {{ profile.OFF }}</p>
+<hr>
+<a href="{% url 'accounts:update_profile' %}">프로필 수정</a>
+{% endblock content %}

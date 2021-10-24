@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>{{ user }}의 프로필 생성</p>
+<form action="{% url 'accounts:create_profile' %}" method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button>submit</button>
+</form>
+{% endblock content %}
