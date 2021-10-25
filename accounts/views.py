@@ -13,8 +13,10 @@ import datetime
 
 def profile(request, nurse_pk):
     nurse = get_object_or_404(get_user_model(), pk=nurse_pk)
+    does_exist = False  # 프로필이 존재하는가
 
     if Profile.objects.filter(user_id=nurse_pk).exists():
+        does_exist = True
         profile = Profile.objects.get(user_id=nurse_pk)
 
         # 경력과 나이를 햇수로 계산
@@ -28,9 +30,14 @@ def profile(request, nurse_pk):
             'profile': profile,
             'WEX': WEX,
             'age': age,
+            'does_exist': does_exist,
         }
         return render(request, 'accounts/profile.html', context)
-    return redirect('accounts:create_profile')
+    context = {
+        'nurse': nurse,
+        'does_exist': does_exist,
+    }
+    return render(request, 'accounts/profile.html', context)
 
 
 def create_profile(request):

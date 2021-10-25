@@ -27,7 +27,7 @@ class ProfileForm(forms.ModelForm):
         widget=forms.SelectDateWidget(years=range(1980, year + 1))
         )
     level = forms.IntegerField(
-        label='등급?이걸뭐라하지',
+        label='레벨',
         max_value = 3,
         min_value = 0
     )
@@ -61,7 +61,7 @@ class ProfileUpdateForm(forms.ModelForm):
         widget=forms.SelectDateWidget(years=range(1980, year + 1))
         )
     level = forms.IntegerField(
-        label='등급?이걸뭐라하지',
+        label='레벨',
         max_value = 3,
         min_value = 0
     )

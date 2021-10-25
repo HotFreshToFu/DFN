@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'duty_creater',
 
     'django_extensions',
+    'bootstrap5',
 
     'django.contrib.admin',
     'django.contrib.auth',

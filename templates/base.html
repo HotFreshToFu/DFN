@@ -28,7 +28,8 @@
       </div>
       <div>
         {% if request.user.is_authenticated %}
-        <a href="{% url 'accounts:logout' %}">로그아웃</a>
+        <a href="{% url 'dfn:new_main' %}" class="me-2">새로운 스케쥴 만들기</a>
+        <a href="{% url 'accounts:logout' %}" class="me-2">로그아웃</a>
         <a href="{% url 'accounts:profile' user.pk %}">개인정보</a>
         {% else %}
         <a href="{% url 'accounts:login' %}">로그인</a>
