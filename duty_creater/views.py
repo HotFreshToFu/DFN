@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
+from django.forms import formset_factory
 import datetime
 from .models import Event
+from .forms import EventForm, EventFormSet
 
 
 def index(request):
@@ -77,6 +79,7 @@ def new(request):
             'duties_of_month': duties_of_month,
             'duties_of_day': duties_of_day,
             'month': month,
+            'start_date': start_date,
 
             'nurses': nurses,
             'duties': duties,
@@ -89,3 +92,20 @@ def new(request):
 def myduty(request, nurse_pk):
     pass
 
+
+def update(request, date):
+    wanted_events = Event.objects.filter(date__startswith=date).all().order_by('date')
+    
+    if request.method == 'POST':
+        formset = EventFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect('dfn:new_main')  # 임시
+
+    else:
+        formset = EventFormSet(queryset=wanted_events)
+    context = {
+        'formset': formset,
+        'date': date
+    }
+    return render(request, 'dfn/update.html', context)

@@ -8,4 +8,5 @@ urlpatterns = [
     path('<int:nurse_pk>', views.myduty, name='myduty'),
     path('new/main/', views.new_main, name='new_main'),  # 새 듀티 생성을 위한 페이지
     path('new/', views.new, name='new'),  # 생성한 듀티 출력 및 저장
+    path('update/<str:date>/', views.update, name='update'),  # 생성된 듀티 일정 수정
 ]
