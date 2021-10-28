@@ -5,6 +5,8 @@ from django.forms import formset_factory
 import datetime
 from .models import Event
 from .forms import EventForm, EventFormSet
+from .make_schedule import make_monthly_schedule
+from pprint import pprint
 
 
 def index(request):
@@ -14,6 +16,39 @@ def index(request):
 
 
 def new_main(request):
+    example_nurse_info = {
+        1: [1, 0, 0, 0, 0, 0, 2, 0],
+        2: [2, 0, 0, 0, 0, 0, 2, 0],
+        3: [3, 0, 0, 0, 0, 0, 2, 0],
+        4: [4, 0, 0, 0, 0, 0, 2, 0],
+        5: [5, 0, 0, 0, 0, 0, 2, 0],
+        6: [6, 0, 0, 0, 0, 0, 2, 0],
+        # 7: [7, 0, 0, 0, 0, 0, 2, 0],
+        # 8: [8, 0, 0, 0, 0, 0, 2, 0],
+        # 9: [9, 0, 0, 0, 0, 0, 0, 0],
+        # 10:[10, 0, 0, 0, 0, 0, 2, 0],
+        # 11: [11, 0, 0, 0, 0, 0, 2, 0],
+        # 12: [12, 0, 0, 0, 0, 0, 2, 0],
+        # 13: [13, 0, 0, 0, 0, 0, 2, 0],
+        # 14: [13, 0, 0, 0, 0, 0, 2, 0],
+        # 15: [13, 0, 0, 0, 0, 0, 2, 0],
+        # 16: [13, 0, 0, 0, 0, 0, 2, 0],
+    }
+
+    example_nurse_pk_list = [1, 2, 3, 4, 5, 6]
+
+    result, modified_nurse_info = make_monthly_schedule(
+        nurse_pk_list=example_nurse_pk_list,
+        nurse_info=example_nurse_info,
+        number_of_nurses=6,
+        needed_nurses_per_shift=1,
+        vacation_info=[],
+        current_month=10,
+        current_day=1,    
+        )
+    pprint(result)
+    pprint(modified_nurse_info)
+    
     return render(request, 'dfn/new_main.html') 
 
 
