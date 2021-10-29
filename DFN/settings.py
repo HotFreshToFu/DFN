@@ -56,6 +56,7 @@ INSTALLED_APPS = [
 
     'django_extensions',
     'bootstrap5',
+    'rest_framework',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -89,6 +90,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # custon tag 추가
+            'libraries': {  
+            'custom_tags':'duty_creater.template_tags.custom_tags'
+            }
         },
     },
 ]

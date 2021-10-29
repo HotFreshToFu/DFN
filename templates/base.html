@@ -24,11 +24,15 @@
   <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
       <div>
-        <a class="navbar-brand" href="{% url 'dfn:index' %}">DFN</a>
+        <a class="navbar-brand" href="{% url 'schedule:index' %}">DFN</a>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'schedule:personal' user.pk %}" class="me-2">나의 듀티</a>
+        <a href="{% url 'schedule:team' user.profile.team %}" class="me-2">팀의 듀티</a>
+        {% endif %}
       </div>
       <div>
         {% if request.user.is_authenticated %}
-        <a href="{% url 'dfn:new_main' %}" class="me-2">새로운 스케쥴 만들기</a>
+        <a href="{% url 'schedule:create' %}" class="me-2">새로운 스케쥴 만들기</a>
         <a href="{% url 'accounts:logout' %}" class="me-2">로그아웃</a>
         <a href="{% url 'accounts:profile' user.pk %}">개인정보</a>
         {% else %}
@@ -39,7 +43,7 @@
   </nav>
 
 
-  <div class="container">
+  <div class="container-fluid">
     {% block content %}
     {% endblock content %}
   </div>

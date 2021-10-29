@@ -4,7 +4,7 @@
 {% block content %}
 <h1>일정 수정</h1>
 
-<form action="{% url 'dfn:update' date %}" method="POST">
+<form action="{% url 'schedule:update' date %}" method="POST">
   {% csrf_token %}
 
   <table id="formset" class="form">

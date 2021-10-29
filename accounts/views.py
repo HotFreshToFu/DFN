@@ -77,7 +77,7 @@ def update_profile(request):
 @require_http_methods(['GET', 'POST'])
 def login(request):
     if request.user.is_authenticated:
-        return redirect('dfn:index')
+        return redirect('schedule:index')
 
     if request.method == 'POST':
         form = AuthenticationForm(request, request.POST)
@@ -96,7 +96,7 @@ def login(request):
 def logout(request):
     if request.user.is_authenticated:
         auth_logout(request)
-    return redirect('dfn:index')
+    return redirect('schedule:index')
 
 
 ################################## 이하 시험 안해봄
@@ -104,7 +104,7 @@ def logout(request):
 @require_http_methods(['GET', 'POST'])
 def signup(request):                                    
     if request.user.is_authenticated:
-        return redirect('dfn:index')
+        return redirect('schedule:index')
 
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -125,7 +125,7 @@ def delete(request):
     if request.user.is_authenticated:
         request.user.delete()
         auth_logout(request)
-    return redirect('dfn:index') 
+    return redirect('schedule:index') 
 
 
 @login_required
@@ -135,7 +135,7 @@ def update(request):
         form = CustomUserChangeForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            return redirect('dfn:index')
+            return redirect('schedule:index')
     else:
         form = CustomUserChangeForm(instance=request.user)
     context = {
@@ -152,7 +152,7 @@ def change_password(request):
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, form.user)
-            return redirect('dfn:index')
+            return redirect('schedule:index')
     else:
         form = PasswordChangeForm(request.user)
     context = {

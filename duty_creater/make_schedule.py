@@ -157,32 +157,32 @@ example_nurse_info = {
     13: [13, 0, 0, 0, 0, 0, 2, 0]
 }
 
-example_nurse_pk_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+# example_nurse_pk_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
-start_time = time.time()
-result, modified_nurse_info = make_monthly_schedule(
-    nurse_pk_list=example_nurse_pk_list,
-    nurse_info=example_nurse_info,
-    number_of_nurses=13,
-    needed_nurses_per_shift=3,
-    vacation_info=[],
-    current_month=10,
-    current_day=1,    
-    )
-print('디버깅용 딕셔너리')
-pprint(modified_nurse_info)
+# start_time = time.time()
+# result, modified_nurse_info = make_monthly_schedule(
+#     nurse_pk_list=example_nurse_pk_list,
+#     nurse_info=example_nurse_info,
+#     number_of_nurses=13,
+#     needed_nurses_per_shift=3,
+#     vacation_info=[],
+#     current_month=10,
+#     current_day=1,    
+#     )
+# print('디버깅용 딕셔너리')
+# pprint(modified_nurse_info)
 
-print()
-i = 1
-for daily in result:
-    print(i, end=' ')
-    i += 1
-    for j in range(4):
-        aaa = daily[j]
-        aaa.sort()
-        print(f'근무 타입:"{j} 근무자: {aaa}', end=' ')
-    print()
+# print()
+# i = 1
+# for daily in result:
+#     print(i, end=' ')
+#     i += 1
+#     for j in range(4):
+#         aaa = daily[j]
+#         aaa.sort()
+#         print(f'근무 타입:"{j} 근무자: {aaa}', end=' ')
+#     print()
 
-end_time = time.time()
-print('실행 시간')
-print(end_time - start_time)
+# end_time = time.time()
+# print('실행 시간')
+# print(end_time - start_time)

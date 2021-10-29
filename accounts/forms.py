@@ -29,11 +29,12 @@ class ProfileForm(forms.ModelForm):
     level = forms.IntegerField(
         label='레벨',
         max_value = 3,
-        min_value = 0
+        min_value = 0,
+        initial=3
     )
-    PTO = forms.IntegerField(label='사용한 연차 수', min_value = 0)
-    team = forms.IntegerField(label='팀',min_value = 0)
-    OFF = forms.IntegerField(label='OFF 수',min_value = 0)
+    PTO = forms.IntegerField(label='사용한 연차 수', min_value = 0, initial=0)
+    team = forms.IntegerField(label='팀',min_value = 0, initial=0)
+    OFF = forms.IntegerField(label='OFF 수',min_value = 0, initial=0)
 
     class Meta:
         model = Profile
