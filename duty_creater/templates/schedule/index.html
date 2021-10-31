@@ -2,6 +2,12 @@
 
 
 {% block content %}
-<h1>{{ user }}님이 로그인한 상태입니다</h1>
+<div class="d-flex flex-column align-items-center m-5">
+  <div class="w-auto p-5 border rounded text-center">
+    <h1>Duty For Nurses</h1>
+    <hr>
+    <h2>{{ user.profile.name }} 간호사님 로그인하셨습니다.</h2>
+  </div>
+</div>
 {% endblock content %}
 

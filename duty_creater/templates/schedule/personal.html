@@ -3,14 +3,14 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <table class="table text-center w-25">
+  <table class="table text-center w-auto">
     <thead>
       <tr>
         <th colspan="7"><h1>{{ nurse_name }} 간호사의 {{ year }}년 {{ month }}월 듀티표</h1></th>
       </tr>
       <tr>
         {% for weekday in weekdays %}  
-        <td>{{ weekday }}</td>
+        <td class="p-3">{{ weekday }}</td>
         {% endfor %}
       </tr>
     </thead>
@@ -21,15 +21,15 @@
         {% for duty in week %}
 
         {% if duty == 0 %}
-        <td>{{ duty }}</td>
+        <td class="p-3">/</td>
         {% elif duty == 1 %}
-        <td style="background-color:#66cc00;">{{ duty }}</td>
+        <td class="p-3" style="background-color:#afd0b3;">D</td>
         {% elif duty == 2 %}
-        <td style="background-color:#4d9900;">{{ duty }}</td>
+        <td class="p-3" style="background-color:#7eb485;">E</td>
         {% elif duty == 3 %}
-        <td style="background-color:#408000;">{{ duty }}</td>
+        <td class="p-3" style="background-color:#5a9861;">N</td>
         {% else %}
-        <td style=""></td>
+        <td class="p-3" style=""></td>
         {% endif %}
 
         {% endfor %}

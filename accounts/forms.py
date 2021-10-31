@@ -12,34 +12,30 @@ class ProfileForm(forms.ModelForm):
         label='이름',
         widget=forms.TextInput(
             attrs={
-                # 'class': 'form-control',
-                # 'placeholder': '이름을 입력하세요',
                 'maxlength': 10,
             }
         )
     )
     WEX = forms.DateField(
         label='경력 시작일',
-        widget=forms.SelectDateWidget(years=range(1980, year + 1))
+        widget=forms.SelectDateWidget(years=range(1960, year + 1))
         )
     DOB = forms.DateField(
         label='생년월일',
-        widget=forms.SelectDateWidget(years=range(1980, year + 1))
+        widget=forms.SelectDateWidget(years=range(1960, year + 1))
         )
+    team = forms.IntegerField(label='팀',min_value = 0, initial=0)
     level = forms.IntegerField(
         label='레벨',
-        max_value = 3,
+        max_value = 2,
         min_value = 0,
-        initial=3
+        initial=2
     )
-    PTO = forms.IntegerField(label='사용한 연차 수', min_value = 0, initial=0)
-    team = forms.IntegerField(label='팀',min_value = 0, initial=0)
-    OFF = forms.IntegerField(label='OFF 수',min_value = 0, initial=0)
 
     class Meta:
         model = Profile
         # fields = '__all__'
-        exclude = ('user',)
+        exclude = ('user', 'OFF', 'PTO',)
 
 
 class ProfileUpdateForm(forms.ModelForm):
@@ -47,33 +43,29 @@ class ProfileUpdateForm(forms.ModelForm):
         label='이름',
         widget=forms.TextInput(
             attrs={
-                # 'class': 'form-control',
-                # 'placeholder': '이름을 입력하세요',
                 'maxlength': 10,
             }
         )
     )
     WEX = forms.DateField(
         label='경력 시작일',
-        widget=forms.SelectDateWidget(years=range(1980, year + 1))
+        widget=forms.SelectDateWidget(years=range(1960, year + 1))
         )
     DOB = forms.DateField(
         label='생년월일',
-        widget=forms.SelectDateWidget(years=range(1980, year + 1))
+        widget=forms.SelectDateWidget(years=range(1960, year + 1))
         )
+    team = forms.IntegerField(label='팀',min_value = 0)
     level = forms.IntegerField(
         label='레벨',
-        max_value = 3,
+        max_value = 2,
         min_value = 0
     )
-    PTO = forms.IntegerField(label='사용한 연차 수', min_value = 0)
-    team = forms.IntegerField(label='팀',min_value = 0)
-    OFF = forms.IntegerField(label='OFF 수',min_value = 0)
 
     class Meta:
         model = Profile
         # fields = '__all__'
-        exclude = ('user',)
+        exclude = ('user', 'OFF', 'PTO',)
         
 
 class CustomUserChangeForm(UserChangeForm):

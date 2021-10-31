@@ -6,6 +6,7 @@ django.setup()
 from .schedule_maker_module import (
     make_daily_schedule,
     make_ideal_counter,
+    transfer_table_to_dict,
 )
 
 from .validation_checker_module import (
@@ -59,7 +60,15 @@ def make_monthly_schedule(
             print('설정 변경 필요')
             return 
 
-    return whole_schedule, nurse_info
+    # 출력 형식 변경. 
+    whole_schedule_dict = transfer_table_to_dict(
+        whole_schedule,
+        nurse_pk_list,
+        MONTHS_LAST_DAY[current_month]
+        )
+    print(whole_schedule_dict)
+    return whole_schedule_dict, nurse_info
+
 
 # 3. 스케쥴 검증
         # is_validate = check_validation(temporary_schedule)
@@ -141,21 +150,21 @@ def update_nurse_info(nurse_info, temporary_schedule):
 7 LAST_SHIFT,           마지막 근무 정보
 """
 
-example_nurse_info = {
-    1: [1, 0, 0, 0, 0, 0, 2, 0],
-    2: [2, 0, 0, 0, 0, 0, 2, 0],
-    3: [3, 0, 0, 0, 0, 0, 2, 0],
-    4: [4, 0, 0, 0, 0, 0, 2, 0],
-    5: [5, 0, 0, 0, 0, 0, 2, 0],
-    6: [6, 0, 0, 0, 0, 0, 2, 0],
-    7: [7, 0, 0, 0, 0, 0, 2, 0],
-    8: [8, 0, 0, 0, 0, 0, 2, 0],
-    9: [9, 0, 0, 0, 0, 0, 0, 0],
-    10:[10, 0, 0, 0, 0, 0, 2, 0],
-    11: [11, 0, 0, 0, 0, 0, 2, 0],
-    12: [12, 0, 0, 0, 0, 0, 2, 0],
-    13: [13, 0, 0, 0, 0, 0, 2, 0]
-}
+# example_nurse_info = {
+#     1: [1, 0, 0, 0, 0, 0, 2, 0],
+#     2: [2, 0, 0, 0, 0, 0, 2, 0],
+#     3: [3, 0, 0, 0, 0, 0, 2, 0],
+#     4: [4, 0, 0, 0, 0, 0, 2, 0],
+#     5: [5, 0, 0, 0, 0, 0, 2, 0],
+#     6: [6, 0, 0, 0, 0, 0, 2, 0],
+#     7: [7, 0, 0, 0, 0, 0, 2, 0],
+#     8: [8, 0, 0, 0, 0, 0, 2, 0],
+#     9: [9, 0, 0, 0, 0, 0, 0, 0],
+#     10:[10, 0, 0, 0, 0, 0, 2, 0],
+#     11: [11, 0, 0, 0, 0, 0, 2, 0],
+#     12: [12, 0, 0, 0, 0, 0, 2, 0],
+#     13: [13, 0, 0, 0, 0, 0, 2, 0]
+# }
 
 # example_nurse_pk_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 

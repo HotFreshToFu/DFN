@@ -83,7 +83,7 @@ def login(request):
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():
             auth_login(request, form.get_user())
-            return redirect(request.GET.get('next') or 'accounts:profile', request.user.pk)
+            return redirect(request.GET.get('next') or 'schedule:personal', request.user.pk)
     else:
         form = AuthenticationForm()
     context = {
@@ -96,10 +96,8 @@ def login(request):
 def logout(request):
     if request.user.is_authenticated:
         auth_logout(request)
-    return redirect('schedule:index')
+    return redirect('accounts:login')
 
-
-################################## 이하 시험 안해봄
 
 @require_http_methods(['GET', 'POST'])
 def signup(request):                                    
@@ -111,7 +109,11 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
-            return redirect('accounts:profile', user.pk)
+            form = ProfileForm()
+            context = {
+                'form': form,
+            }
+            return render(request, 'accounts/create_profile.html', context)
     else:
         form = CustomUserCreationForm()
     context = {

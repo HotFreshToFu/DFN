@@ -13,7 +13,7 @@ class Profile(models.Model):
     name = models.CharField(max_length=10)
     WEX = models.DateField()
     DOB = models.DateField()
-    level = models.IntegerField(default=3)
+    level = models.IntegerField(default=2)
     PTO = models.IntegerField(default=0)
     team = models.IntegerField()
     OFF = models.IntegerField(default=0)

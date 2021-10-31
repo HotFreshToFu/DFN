@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
+{% load bootstrap5 %}
 
 {% block content %}
-<h1>Signup</h1>
-<form action="{% url 'accounts:signup' %}" method="POST">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <input type="submit">
-</form>
+<div class="d-flex flex-column align-items-center m-5">
+  <div class="w-auto p-5 border rounded">
+    <h1>회원가입</h1>
+    <hr>
+    <form action="{% url 'accounts:signup' %}" method="POST">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <button class="btn btn-outline-success float-end">회원가입</button>
+    </form>
+  </div>
+</div>
 {% endblock content %}

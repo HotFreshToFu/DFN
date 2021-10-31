@@ -151,5 +151,23 @@ def place_shifts(
     return schedule_table
 
 
+def transfer_table_to_dict(whole_schedule, nurse_pk_list, days_of_month):
+    """
+    연결리스트 형식으로 정렬된 스케쥴 리스트를 입력받아
+    KEY는 간호사의 PK, Value는 개인의 한 달 스케쥴 리스트인 
+    dict 개체를 반환하는 함수
+    """
+
+    result_dict = dict()
+    for nurse_pk in nurse_pk_list:
+        result_dict[nurse_pk] = [0] * (days_of_month)
+    # 인덱스 어떻게 맞출건지 협의 필. 
+
+    for date in range(days_of_month):
+        daily_schedule = whole_schedule[date]
+        for shift in range(1, 4):
+            for nurse in daily_schedule[shift]:
+                result_dict[nurse][date] = shift
 
 
+    return result_dict

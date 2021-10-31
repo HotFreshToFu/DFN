@@ -12,6 +12,30 @@ import json
 import datetime
 
 
+def get_nurse_info(pk_list: list) -> dict:
+    nurse_profile_dict = {}
+
+    for pk in pk_list:
+        nurse_profile = Profile.objects.get(user_id=pk)
+        level = nurse_profile.level
+        team = nurse_profile.team
+        off_cnt = nurse_profile.OFF
+
+        nurse_profile_dict[pk] = [pk, level, team, off_cnt]
+
+    return nurse_profile_dict
+
+
+def get_last_schedule(pk_list: list, date: str) -> dict:
+    nurse_schedule_dict = {}
+
+    for pk in pk_list:
+        duties = list(Event.objects.filter(date__startswith=date).filter(nurse_id=pk).values_list('duty', flat=True))
+        nurse_schedule_dict[pk] = duties
+
+    return nurse_schedule_dict
+
+
 def index(request):
     context = {
     }
@@ -50,7 +74,8 @@ def create_monthly(request, date):
         # 근무 기록 생성
         for nurse_pk, duties in dict_duties.items():  
             start_date = datetime.datetime.strptime(date, '%Y-%m')  # datetime 객체로 변환
-            nurse_profile = Profile.objects.get(pk=nurse_pk)  # 간호사 프로필 객체
+            nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
+            
             nurse_profile.OFF = 0  # 임시로 OFF 초기화
 
             weekdays_idx = 0  # 현재 날짜(int)
@@ -69,39 +94,47 @@ def create_monthly(request, date):
 
     # 한달 일정 생성
     example_nurse_info = {
-        7: [7, 0, 0, 0, 0, 0, 2, 0],
         2: [2, 0, 0, 0, 0, 0, 2, 0],
         3: [3, 0, 0, 0, 0, 0, 2, 0],
         4: [4, 0, 0, 0, 0, 0, 2, 0],
         5: [5, 0, 0, 0, 0, 0, 2, 0],
         6: [6, 0, 0, 0, 0, 0, 2, 0],
+        7: [7, 0, 0, 0, 0, 0, 2, 0],
+        8: [8, 0, 0, 0, 0, 0, 2, 0],
+        9: [9, 0, 0, 0, 0, 0, 0, 0],
+        10:[10, 0, 0, 0, 0, 0, 2, 0],
+        11: [11, 0, 0, 0, 0, 0, 2, 0],
+        12: [12, 0, 0, 0, 0, 0, 2, 0],
+        13: [13, 0, 0, 0, 0, 0, 2, 0],
+        14: [14, 0, 0, 0, 0, 0, 2, 0],
+        15: [15, 0, 0, 0, 0, 0, 2, 0],
+        16: [16, 0, 0, 0, 0, 0, 2, 0],
+        17: [17, 0, 0, 0, 0, 0, 2, 0],
+        18: [18, 0, 0, 0, 0, 0, 2, 0],
+        19: [19, 0, 0, 0, 0, 0, 2, 0],
     }
+
 
     example_nurse_pk_list = []
     nurse_pk_list = get_user_model().objects.filter(~Q(username='admin')).values('id')
     for i in range(len(nurse_pk_list)):
         example_nurse_pk_list.append(nurse_pk_list[i]['id'])
 
-    result, modified_nurse_info = make_monthly_schedule(
+    # print('--------------------------------------------')
+    # print(get_nurse_info(example_nurse_pk_list))
+
+    # print('--------------------------------------------')
+    # print(get_last_schedule(example_nurse_pk_list, '2021-10'))
+
+    dict_duties, modified_nurse_info = make_monthly_schedule(
         nurse_pk_list=example_nurse_pk_list,
         nurse_info=example_nurse_info,
-        number_of_nurses=6,
-        needed_nurses_per_shift=1,
+        number_of_nurses=18,
+        needed_nurses_per_shift=3,
         vacation_info=[],
         current_month=10,
         current_day=1,    
         )
-    # pprint(result)
-    # pprint(modified_nurse_info)
-
-    dict_duties = {
-        2: [1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3], 
-        3: [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0], 
-        4: [0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0], 
-        5: [0, 1, 0, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2], 
-        6: [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1], 
-        7: [0, 0, 3, 0, 1, 0, 0, 0, 1, 0, 3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0]
-    }
 
     # 한달 일정을 json 파일로 임시 저장
     with open('temp_schedule.json', 'w') as json_file:
@@ -112,13 +145,26 @@ def create_monthly(request, date):
         nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
         nurse_names.append((nurse_pk, nurse_profile.name))
 
+    print('----------------------------------------------------')
+    team_duties = [[], [], []]
+    for key, value in dict_duties.items():
+        nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
+        print(nurse_profile)
+        team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
+
+    print(team_duties)
+
+    days = list(range(1, 31 + 1))  # 템플릿 출력용 일(day) 리스트
+
     context = {
+        'days': days,
         'month': month,
         'year': year,
         'start_date': date,
         'weekdays': weekdays,
         'nurse_names': nurse_names,
         'dict_duties': dict_duties,
+        'team_duties': team_duties,
     }
     return render(request, 'schedule/create_monthly.html', context)
 
@@ -180,10 +226,7 @@ def team(request, team_id, date=today):
     year = date[: 4]  # 사용자가 선택한 연(YY 형식)
 
     nurse_pks = Profile.objects.filter(team=team_id).values_list('user_id', flat=True)
-    dict_duties = {}
-    for nurse_pk in nurse_pks:
-        duties = list(Event.objects.filter(date__startswith=date).filter(nurse_id=nurse_pk).values_list('duty', flat=True))
-        dict_duties[nurse_pk] = duties
+    dict_duties = get_last_schedule(nurse_pks, date)
     
     weekdays = []  # date-01 부터 date-31까지 요일 저장 리스트
     start_date = date + '-01'  # 시작일
@@ -197,7 +240,10 @@ def team(request, team_id, date=today):
         nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
         nurse_names.append((nurse_pk, nurse_profile.name))
 
+    days = list(range(1, 31 + 1))  # 템플릿 출력용 일(day) 리스트
+
     context = {
+        'days': days,
         'month': month,
         'year': year,
         'team_id': team_id,
