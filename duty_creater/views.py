@@ -114,17 +114,10 @@ def create_monthly(request, date):
         19: [19, 0, 0, 0, 0, 0, 2, 0],
     }
 
-
     example_nurse_pk_list = []
     nurse_pk_list = get_user_model().objects.filter(~Q(username='admin')).values('id')
     for i in range(len(nurse_pk_list)):
         example_nurse_pk_list.append(nurse_pk_list[i]['id'])
-
-    # print('--------------------------------------------')
-    # print(get_nurse_info(example_nurse_pk_list))
-
-    # print('--------------------------------------------')
-    # print(get_last_schedule(example_nurse_pk_list, '2021-10'))
 
     dict_duties, modified_nurse_info = make_monthly_schedule(
         nurse_pk_list=example_nurse_pk_list,
@@ -145,14 +138,12 @@ def create_monthly(request, date):
         nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
         nurse_names.append((nurse_pk, nurse_profile.name))
 
-    print('----------------------------------------------------')
     team_duties = [[], [], []]
     for key, value in dict_duties.items():
         nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
         print(nurse_profile)
         team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
 
-    print(team_duties)
 
     days = list(range(1, 31 + 1))  # 템플릿 출력용 일(day) 리스트
 
@@ -198,15 +189,25 @@ def personal(request, nurse_pk, date=today):
 
     start_date = date + '-01'  # 시작일
     start_weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d').weekday() + 1  # 시작 요일
-    weeks = [[-1] * (start_weekday) + duties[: (7 - start_weekday)]]
+    duties_for_calendar = [[-1] * (start_weekday) + duties[: (7 - start_weekday)]]
     day_idx = 7 - start_weekday
     while day_idx < 31:
         if 31 - day_idx <= 7:
-            weeks.append(duties[day_idx: ])
+            duties_for_calendar.append(duties[day_idx: ])
             break
-        weeks.append(duties[day_idx: day_idx + 7 ])
+        duties_for_calendar.append(duties[day_idx: day_idx + 7 ])
         day_idx += 7
     
+    # 달력에 일과 함께 출력하기 위해 duties_for_calendar의 모든 원소를 일과 함께 튜플로 다시 만듦
+    day = 1
+    for week_idx in range(len(duties_for_calendar)):
+        for day_idx in range(len(duties_for_calendar[week_idx])):
+            if duties_for_calendar[week_idx][day_idx] == -1:
+                duties_for_calendar[week_idx][day_idx] = (0, duties_for_calendar[week_idx][day_idx])
+            else:
+                duties_for_calendar[week_idx][day_idx] = (day, duties_for_calendar[week_idx][day_idx])
+                day += 1
+
     weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
     context = {
@@ -214,7 +215,7 @@ def personal(request, nurse_pk, date=today):
         'year': year,
         'nurse_name': nurse_name,
         'date': date,
-        'weeks': weeks,
+        'duties_for_calendar': duties_for_calendar,
         'weekdays': weekdays,
     }
     return render(request, 'schedule/personal.html', context)

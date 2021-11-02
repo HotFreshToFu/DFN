@@ -15,21 +15,40 @@
       </tr>
     </thead>
     <tbody>
-      {% for week in weeks %}
+      {% for week in duties_for_calendar %}
       <tr>
 
-        {% for duty in week %}
-
+        {% for day, duty in week %}
+      
         {% if duty == 0 %}
-        <td class="p-3">/</td>
+        <td class="py-0 border-0" style="text-align: left;">{{ day }}</td>
         {% elif duty == 1 %}
-        <td class="p-3" style="background-color:#afd0b3;">D</td>
+        <td class="py-0 border-0" style="background-color:#2a9d8f; text-align: left;">{{ day }}</td>
         {% elif duty == 2 %}
-        <td class="p-3" style="background-color:#7eb485;">E</td>
+        <td class="py-0 border-0" style="background-color:#e9c46a; text-align: left;">{{ day }}</td>
         {% elif duty == 3 %}
-        <td class="p-3" style="background-color:#5a9861;">N</td>
+        <td class="py-0 border-0" style="background-color:#f4a261; text-align: left;">{{ day }}</td>
         {% else %}
-        <td class="p-3" style=""></td>
+        <td class="py-0 border-0" style=""></td>
+        {% endif %}
+
+        {% endfor %}
+
+      </tr>
+      <tr>
+
+        {% for day, duty in week %}
+      
+        {% if duty == 0 %}
+        <td class="px-3 pt-0">/</td>
+        {% elif duty == 1 %}
+        <td class="px-3 pt-0" style="background-color:#2a9d8f;">D</td>
+        {% elif duty == 2 %}
+        <td class="px-3 pt-0" style="background-color:#e9c46a;">E</td>
+        {% elif duty == 3 %}
+        <td class="px-3 pt-0" style="background-color:#f4a261;">N</td>
+        {% else %}
+        <td class="px-3 pt-0" style=""></td>
         {% endif %}
 
         {% endfor %}
