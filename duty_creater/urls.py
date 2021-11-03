@@ -12,4 +12,6 @@ urlpatterns = [
     path('personal/<int:nurse_pk>/<str:date>/', views.personal, name='personal'),  # 개인 일정(달 선택 가능)
     path('team/<int:team_id>/', views.team, name='team'),  # 팀 일정(이번 달)
     path('team/<int:team_id>/<str:date>/', views.team, name='team'),  # 팀 일정(달 선택 가능)
+    path('hospital/', views.hospital, name='hospital'),  # 병동 일정(이번 달)
+    path('hospital/<str:date>/', views.hospital, name='hospital'),  # 병동 일정(달 선택 가능)
 ]

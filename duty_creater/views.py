@@ -10,6 +10,7 @@ from .forms import EventForm, EventFormSet
 from pprint import pprint
 import json
 import datetime
+import calendar
 
 
 def get_nurse_info(pk_list: list) -> dict:
@@ -54,16 +55,21 @@ def create_monthly(request, date):
     # date: 사용자가 선택한 날짜(YY-MM 형식. str)
     month = date[5: 7]  # 사용자가 선택한 달(MM 형식)
     year = date[: 4]  # 사용자가 선택한 연(YY 형식)
+    last_day = calendar.monthrange(int(year), int(month))[1]  # 해당 달의 마지막 날
 
-    weekdays = []  # date-01 부터 date-31까지 요일 저장 리스트
+    weekdays = []  # date-01 부터 date-last_day까지 요일 저장 리스트
     start_date = date + '-01'  # 시작일
     weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
-    for _ in range(31):
+    for _ in range(last_day):
         weekdays.append(weekday.strftime('%a'))
         weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
 
     if request.method == "POST":
+        json_data = json.loads(request.body)
+        print(json_data)
+        print(json_data["updates"])
+
         # 사용자가 생성하기로 했다면 json 파일을 불러와 이를 DB에 저장
         with open('temp_schedule.json') as json_file:
             dict_duties = json.load(json_file)
@@ -125,7 +131,7 @@ def create_monthly(request, date):
         number_of_nurses=18,
         needed_nurses_per_shift=3,
         vacation_info=[],
-        current_month=10,
+        current_month=int(month),
         current_day=1,    
         )
 
@@ -141,11 +147,10 @@ def create_monthly(request, date):
     team_duties = [[], [], []]
     for key, value in dict_duties.items():
         nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
-        print(nurse_profile)
         team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
 
 
-    days = list(range(1, 31 + 1))  # 템플릿 출력용 일(day) 리스트
+    days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
 
     context = {
         'days': days,
@@ -184,6 +189,7 @@ def personal(request, nurse_pk, date=today):
     # date의 기본값은 현재 달
     month = date[5: 7]  # 사용자가 선택한 달(MM 형식)
     year = date[: 4]  # 사용자가 선택한 연(YY 형식)
+    last_day = calendar.monthrange(int(year), int(month))[1]  # 해당 달의 마지막 날
     nurse_name = Profile.objects.filter(user_id=nurse_pk).values('name')[0]['name']
     duties = list(Event.objects.filter(date__startswith=date).filter(nurse_id=nurse_pk).values_list('duty', flat=True))
 
@@ -191,8 +197,8 @@ def personal(request, nurse_pk, date=today):
     start_weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d').weekday() + 1  # 시작 요일
     duties_for_calendar = [[-1] * (start_weekday) + duties[: (7 - start_weekday)]]
     day_idx = 7 - start_weekday
-    while day_idx < 31:
-        if 31 - day_idx <= 7:
+    while day_idx < last_day:
+        if last_day - day_idx <= 7:
             duties_for_calendar.append(duties[day_idx: ])
             break
         duties_for_calendar.append(duties[day_idx: day_idx + 7 ])
@@ -225,14 +231,15 @@ def team(request, team_id, date=today):
     # date의 기본값은 현재 달
     month = date[5: 7]  # 사용자가 선택한 달(MM 형식)
     year = date[: 4]  # 사용자가 선택한 연(YY 형식)
+    last_day = calendar.monthrange(int(year), int(month))[1]  # 해당 달의 마지막 날
 
     nurse_pks = Profile.objects.filter(team=team_id).values_list('user_id', flat=True)
     dict_duties = get_last_schedule(nurse_pks, date)
     
-    weekdays = []  # date-01 부터 date-31까지 요일 저장 리스트
+    weekdays = []  # date-01 부터 date-last_day까지 요일 저장 리스트
     start_date = date + '-01'  # 시작일
     weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
-    for _ in range(31):
+    for _ in range(last_day):
         weekdays.append(weekday.strftime('%a'))
         weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
@@ -241,7 +248,7 @@ def team(request, team_id, date=today):
         nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
         nurse_names.append((nurse_pk, nurse_profile.name))
 
-    days = list(range(1, 31 + 1))  # 템플릿 출력용 일(day) 리스트
+    days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
 
     context = {
         'days': days,
@@ -254,3 +261,45 @@ def team(request, team_id, date=today):
         'dict_duties': dict_duties,
     }
     return render(request, 'schedule/team.html', context)
+
+
+def hospital(request, date=today):
+    # date의 기본값은 현재 달
+    month = date[5: 7]  # 사용자가 선택한 달(MM 형식)
+    year = date[: 4]  # 사용자가 선택한 연(YY 형식)
+    last_day = calendar.monthrange(int(year), int(month))[1]  # 해당 달의 마지막 날
+
+    weekdays = []  # date-01 부터 date-last_day까지 요일 저장 리스트
+    start_date = date + '-01'  # 시작일
+    weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
+    for _ in range(last_day):
+        weekdays.append(weekday.strftime('%a'))
+        weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
+
+    nurse_pks = Profile.objects.filter(team__gt=0).values_list('user_id', flat=True)
+    dict_duties = get_last_schedule(nurse_pks, date)
+
+    nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
+    for nurse_pk in dict_duties:
+        nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
+        nurse_names.append((nurse_pk, nurse_profile.name))
+
+    team_duties = [[], [], []]
+    for key, value in dict_duties.items():
+        nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
+        team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
+
+
+    days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
+
+    context = {
+        'days': days,
+        'month': month,
+        'year': year,
+        'start_date': date,
+        'weekdays': weekdays,
+        'nurse_names': nurse_names,
+        'dict_duties': dict_duties,
+        'team_duties': team_duties,
+    }
+    return render(request, 'schedule/hospital.html', context)

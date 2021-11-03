@@ -39,13 +39,13 @@
           {% for duty in duties %}
 
           {% if duty == 0 %}
-          <td>/</td>
+          <td data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">/</td>
           {% elif duty == 1 %}
-          <td style="background-color:#afd0b3;">D</td>
+          <td style="background-color:#2a9d8f;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">D</td>
           {% elif duty == 2 %}
-          <td style="background-color:#7eb485;">E</td>
+          <td style="background-color:#e9c46a;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">E</td>
           {% else %}
-          <td style="background-color:#5a9861;">N</td>
+          <td style="background-color:#f4a261;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">N</td>
           {% endif %}
 
           {% endfor %}
@@ -57,60 +57,10 @@
   </table>
   <br>
 {% endfor %}
-
-
-{% comment %} 
-<table class="table text-center">
-  <thead>
-    <tr>
-      <th colspan="32">1팀의 한달 일정</th>
-    </tr>
-    <tr>
-      <td></td>
-      {# 숫자 2는 간호사 pk2, 31의 길이를 가져오기 위해 사용 하지만 수정 필요 2번 간호사가 항상 있지는 않을테니 #}
-      {% for duty in dict_duties.2 %}  
-      <td>{{ forloop.counter }}</td>
-      {% endfor %}
-    </tr>
-    <tr>
-      <td></td>
-      {% for weekday in weekdays %}  
-      {% if weekday == 'Sun' %}
-      <td style="color:#e00404;">{{ weekday }}</td>
-      {% elif weekday == 'Sat' %}
-      <td style="color:#0094fe;">{{ weekday }}</td>
-      {% else %}
-      <td>{{ weekday }}</td>
-      {% endif %}
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for nurse_pk, nurse_name in nurse_names %}
-    <tr>
-      <td>{{ nurse_name }}</td>
-
-      {% for duty in dict_duties|get_item:nurse_pk %}
-
-      {% if duty == 0 %}
-      <td>{{ duty }}</td>
-      {% elif duty == 1 %}
-      <td style="background-color:#66cc00;">{{ duty }}</td>
-      {% elif duty == 2 %}
-      <td style="background-color:#4d9900;">{{ duty }}</td>
-      {% else %}
-      <td style="background-color:#408000;">{{ duty }}</td>
-      {% endif %}
-
-      {% endfor %}
-
-    </tr>
-    {% endfor %}
-  </tbody>
-</table> 
-{% endcomment %}
-
+<!--
 <form action="{% url 'schedule:create_monthly' start_date %}" method="POST">
+-->
+<form>
   {% csrf_token %}
   <button class="btn btn-outline-success" style="float: right;">확정</button>
 </form>
@@ -119,7 +69,36 @@
   <button class="btn btn-outline-success mx-2" style="float: right;">재생성</button>
 </a>
 
-
-
 {% endblock content %}
 
+
+{% block script %}
+<script>
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+
+  const updates = {}
+  const duties = document.querySelectorAll('.duty')
+  
+  duties.forEach(duty => {
+    duty.addEventListener('click', function (event) {
+      updates['2'] = updates['2'] ? (updates['2'] + 1) % 3 : 0
+      console.log(event)
+
+      const date = event.target.dataset.date
+      axios({
+        method: 'post',
+        url: `http://127.0.0.1:8000/schedule/create/${date}/`,
+        headers: {'X-CSRFToken': csrftoken},
+        data: {updates:updates},
+      })
+        .then(response => {
+          console.log(updates)
+        })
+    })
+
+  })
+
+
+
+</script>
+{% endblock script %} 
