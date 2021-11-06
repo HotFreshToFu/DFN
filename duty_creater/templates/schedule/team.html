@@ -2,56 +2,62 @@
 {% load custom_tags %}
 
 {% block content %}
-<h1>{{team_id}}팀의 {{ year}}년 {{ month }}월 듀티</h1>
+<div>
+  <h1>{{team_id}}팀의 {{ year}}년 {{ month }}월 듀티</h1>
 
-<table class="table text-center">
-  <thead>
-    <tr>
-      <th colspan="32">{{ team_id }}팀의 한달 일정</th>
-    </tr>
-    <tr>
-      <td></td>
-      {% for day in days %}  
-      <td>{{ day }}</td>
+  <table class="table text-center table-hover">
+    <thead>
+      <tr>
+        <th colspan="32">{{ team_id }}팀의 한달 일정</th>
+      </tr>
+      <tr>
+        <td></td>
+        {% for day in days %}  
+        <td>{{ day }}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <td></td>
+        {% for weekday in weekdays %}  
+        {% if weekday == 'Sun' %}
+        <td style="color:#e00404;">{{ weekday }}</td>
+        {% elif weekday == 'Sat' %}
+        <td style="color:#0094fe;">{{ weekday }}</td>
+        {% else %}
+        <td>{{ weekday }}</td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% comment %} <p>{{nurses_names.0}}</p> {% endcomment %}
+      {% for nurse_pk, nurse_name in nurse_names %}
+      <tr>  
+        {% if request.user.profile.name == nurse_name %}
+        <td class="fw-bolder" style="color: #e76f51;">{{ nurse_name }}</td>
+        {% else %}
+        <td>{{ nurse_name }}</td>
+        {% endif %}
+
+        {% for duty in dict_duties|get_item:nurse_pk %}
+
+        {% if duty == 0 %}
+        <td>/</td>
+        {% elif duty == 1 %}
+        <td style="background-color:#2a9d8f;">D</td>
+        {% elif duty == 2 %}
+        <td style="background-color:#e9c46a;">E</td>
+        {% else %}
+        <td style="background-color:#f4a261;">N</td>
+        {% endif %}
+
+        {% endfor %}
+
+      </tr>
       {% endfor %}
-    </tr>
-    <tr>
-      <td></td>
-      {% for weekday in weekdays %}  
-      {% if weekday == 'Sun' %}
-      <td style="color:#e00404;">{{ weekday }}</td>
-      {% elif weekday == 'Sat' %}
-      <td style="color:#0094fe;">{{ weekday }}</td>
-      {% else %}
-      <td>{{ weekday }}</td>
-      {% endif %}
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% comment %} <p>{{nurses_names.0}}</p> {% endcomment %}
-    {% for nurse_pk, nurse_name in nurse_names %}
-    <tr>
-      <td>{{ nurse_name }}</td>
+    </tbody>
+  </table>
 
-      {% for duty in dict_duties|get_item:nurse_pk %}
-
-      {% if duty == 0 %}
-      <td>/</td>
-      {% elif duty == 1 %}
-      <td style="background-color:#2a9d8f;">D</td>
-      {% elif duty == 2 %}
-      <td style="background-color:#e9c46a;">E</td>
-      {% else %}
-      <td style="background-color:#f4a261;">N</td>
-      {% endif %}
-
-      {% endfor %}
-
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+</div>
 {% endblock content %}
 

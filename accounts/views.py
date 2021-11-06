@@ -5,13 +5,19 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_safe
 from .forms import ProfileForm, ProfileUpdateForm, CustomUserChangeForm, CustomUserCreationForm
 from .models import Profile
 import datetime
 
 
+@login_required
+@require_safe
 def profile(request, nurse_pk):
+    # 남의 프로필을 보려는 경우 자신의 듀티로 리다이렉트
+    if request.user.pk != nurse_pk:
+        return redirect('schedule:personal', request.user.pk)
+
     nurse = get_object_or_404(get_user_model(), pk=nurse_pk)
     does_exist = False  # 프로필이 존재하는가
 
@@ -40,44 +46,52 @@ def profile(request, nurse_pk):
     return render(request, 'accounts/profile.html', context)
 
 
+@require_http_methods(['GET', 'POST'])
 def create_profile(request):
-    if Profile.objects.filter(user_id=request.user.pk).exists():
-        return redirect('accounts:profile', request.user.pk)
-    if request.method == 'POST':
-        form = ProfileForm(request.POST)
-        if form.is_valid:
-            profile = form.save(commit=False)
-            profile.user = request.user
-            profile.save()
+    if request.user.is_authenticated:
+        # 이미 프로필이 존재하는 사용자
+        if Profile.objects.filter(user_id=request.user.pk).exists():
             return redirect('accounts:profile', request.user.pk)
-    else:
-        form = ProfileForm()
-    context = {
-        'form': form,
-    }
-    return render(request, 'accounts/create_profile.html', context)
+        
+        if request.method == 'POST':
+            form = ProfileForm(request.POST)
+            if form.is_valid:
+                profile = form.save(commit=False)
+                profile.user = request.user
+                profile.save()
+                return redirect('accounts:profile', request.user.pk)
+        else:
+            form = ProfileForm()
+        context = {
+            'form': form,
+        }
+        return render(request, 'accounts/create_profile.html', context)
+    return redirect('accounts:login')
 
 
+@require_http_methods(['GET', 'POST'])
 def update_profile(request):
-    if request.method == 'POST':
-        form = ProfileUpdateForm(request.POST, instance=request.user.profile)
-        if form.is_valid():
-            profile = form.save(commit=False)
-            profile.user = request.user
-            profile.save()
-            return redirect('accounts:profile', request.user.pk)
-    else:
-        form = ProfileUpdateForm(instance=request.user.profile)
-    context = {
-        'form': form,
-    }
-    return render(request, 'accounts/update_profile.html', context)
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+            if form.is_valid():
+                profile = form.save(commit=False)
+                profile.user = request.user
+                profile.save()
+                return redirect('accounts:profile', request.user.pk)
+        else:
+            form = ProfileUpdateForm(instance=request.user.profile)
+        context = {
+            'form': form,
+        }
+        return render(request, 'accounts/update_profile.html', context)
+    return redirect('accounts:login')
 
 
 @require_http_methods(['GET', 'POST'])
 def login(request):
     if request.user.is_authenticated:
-        return redirect('schedule:index')
+        return redirect('schedule:personal', request.user.pk)
 
     if request.method == 'POST':
         form = AuthenticationForm(request, request.POST)

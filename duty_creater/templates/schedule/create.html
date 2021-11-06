@@ -7,15 +7,44 @@
     <hr>
     <h3>원하는 달을 선택하세요</h3>
 
-    <form action="{% url 'schedule:create'  %}" method="POST">
+    {% comment %} <form action="{% url 'schedule:create'  %}" method="POST"> {% endcomment %}
+    <form id="createForm">
       {% csrf_token %}
-      <input type="month" name="start" id="start" value="" class="border-success rounded" style="border-width:1px; text-align:center; padding:3px; margin:5px; border-style:solid;"> <!-- 현재 날짜를 기본값으로 넣고싶다 -->
+      <input type="month" id="start" class="border-success rounded" style="border-width:1px; text-align:center; padding:3px; margin:5px; border-style:solid;"> <!-- 현재 날짜를 기본값으로 넣고싶다 -->
       <hr>
       <button class="btn btn-outline-success">생성</button>
     </form> 
 
   </div>
 </div>
-
 {% endblock content %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+  const createForm = document.querySelector('#createForm')
+  const dateInput = document.querySelector('#start')
+
+  createForm.addEventListener('submit', function (event) {
+    event.preventDefault()
+    if (dateInput.value) {
+      axios({
+        method: 'post',
+        url: `http://127.0.0.1:8000/schedule/can-create/${dateInput.value}/`,
+        headers: {'X-CSRFToken': csrftoken},
+      })
+        .then(response => {
+          console.log(response)
+          console.log(response.data.flag)
+          if (response.data.flag) {
+            window.location.href = `/schedule/create/${dateInput.value}/`
+          } else {
+            alert('선택하신 날짜에 이미 듀티가 존재합니다.')
+          }
+        })
+      }
+  })
+</script>
+{% endblock script %}
 

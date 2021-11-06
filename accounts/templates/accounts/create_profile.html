@@ -3,11 +3,14 @@
 
 {% block content %}
 <div class="d-flex flex-column align-items-center">
-  <h1>{{ user }}의 프로필 생성</h1>
-  <form action="{% url 'accounts:create_profile' %}" method="POST">
-    {% csrf_token %}
-    {% bootstrap_form form %}
-    <button class="btn btn-outline-success">작성</button>
-  </form>
+  <div class="w-auto p-5 border rounded">
+    <h1>{{ user }}의 프로필 작성</h1>
+    <hr>
+    <form action="{% url 'accounts:create_profile' %}" method="POST">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <button class="btn btn-outline-success float-end">작성</button>
+    </form>
+  </div>
 </div>
 {% endblock content %}

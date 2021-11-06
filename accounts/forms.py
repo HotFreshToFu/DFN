@@ -55,11 +55,12 @@ class ProfileUpdateForm(forms.ModelForm):
         label='생년월일',
         widget=forms.SelectDateWidget(years=range(1960, year + 1))
         )
-    team = forms.IntegerField(label='팀',min_value = 0)
+    team = forms.IntegerField(label='팀',min_value = 0, widget=forms.NumberInput(attrs={'readonly':'readonly'}))
     level = forms.IntegerField(
         label='레벨',
         max_value = 2,
-        min_value = 0
+        min_value = 0,
+        widget=forms.NumberInput(attrs={'readonly':'readonly'})
     )
 
     class Meta:

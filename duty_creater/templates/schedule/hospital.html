@@ -6,7 +6,7 @@
 
 
 {% for team_duty_list in team_duties %}
-  <table class="table text-center">
+  <table class="table text-center table-hover">
     <thead>
       <tr>
         <th colspan="32">{{ forloop.counter }}팀의 한달 일정</th>
@@ -34,7 +34,11 @@
       {% for team_duty in team_duty_list %}
         {% for nurse_name, duties in team_duty.items %}
         <tr>
+          {% if request.user.profile.name == nurse_name %}
+          <td class="fw-bolder" style="color: #e76f51;">{{ nurse_name }}</td>
+          {% else %}
           <td>{{ nurse_name }}</td>
+          {% endif %}
 
           {% for duty in duties %}
 

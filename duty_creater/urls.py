@@ -6,6 +6,7 @@ app_name = 'schedule'
 urlpatterns = [
     path('', views.index, name='index'),
     path('create/', views.create, name='create'),  # 새 듀티 생성을 위한 날짜 선택
+    path('can-create/<str:date>/', views.can_create, name='can_create'),  # 한달 일정 생성 가능 여부 판별
     path('create/<str:date>/', views.create_monthly, name='create_monthly'),  # 한달 일정 생성
     path('update/<str:date>/', views.update, name='update'),  # 생성된 듀티 일정 수정
     path('personal/<int:nurse_pk>/', views.personal, name='personal'),  # 개인 일정(이번 달)

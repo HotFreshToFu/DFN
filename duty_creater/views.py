@@ -2,7 +2,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.forms import formset_factory
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods, require_POST, require_safe
+from django.http import JsonResponse, HttpResponse
 from accounts.models import Profile
 from .make_schedule import make_monthly_schedule
 from .models import Event
@@ -37,21 +39,52 @@ def get_last_schedule(pk_list: list, date: str) -> dict:
     return nurse_schedule_dict
 
 
+@require_safe
 def index(request):
-    context = {
-    }
-    return render(request, 'schedule/index.html', context)
+    if request.user.is_authenticated:
+        return redirect('schedule:personal', request.user.pk)
+    return render(request, 'schedule/index.html')
 
 
+@require_http_methods(['GET', 'POST'])
 def create(request):
-    if request.method == "POST":
-        start_date = request.POST.get('start')  # 사용자가 선택한 날짜(YY-MM 형식에 str type)
-        return redirect('schedule:create_monthly', start_date)
+    # 인증되지 않은 사용자
+    if not request.user.is_authenticated:
+        return redirect('accounts:login')
+
+    # 스태프 간호사만 일정 생성 가능
+    if request.user.is_staff:
+        if request.method == "POST":
+            start_date = request.POST.get('start')  # 사용자가 선택한 날짜(YY-MM 형식에 str type)
+            return redirect('schedule:create_monthly', start_date)
+        
+        return render(request, 'schedule/create.html') 
+    return redirect('schedule:personal', request.user.pk)
+
+
+@require_POST
+def can_create(request, date):
+    flag = True  # 가능
     
-    return render(request, 'schedule/create.html') 
+    if Event.objects.filter(date__startswith=date).exists():
+        flag = False  # 불가능
+
+    context = {
+        'flag': flag,
+    }
+    return JsonResponse(context)
 
 
+@require_http_methods(['GET', 'POST'])
 def create_monthly(request, date):
+    # 인증되지 않은 사용자
+    if not request.user.is_authenticated:
+        return redirect('accounts:login')
+    
+    # 일정 생성 권한이 없는 사용자
+    if not request.user.is_staff:
+        return redirect('schedule:personal', request.user.pk)
+
     # date: 사용자가 선택한 날짜(YY-MM 형식. str)
     month = date[5: 7]  # 사용자가 선택한 달(MM 형식)
     year = date[: 4]  # 사용자가 선택한 연(YY 형식)
@@ -64,20 +97,23 @@ def create_monthly(request, date):
         weekdays.append(weekday.strftime('%a'))
         weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
-
     if request.method == "POST":
-        json_data = json.loads(request.body)
-        print(json_data)
-        print(json_data["updates"])
-
         # 사용자가 생성하기로 했다면 json 파일을 불러와 이를 DB에 저장
         with open('temp_schedule.json') as json_file:
             dict_duties = json.load(json_file)
 
-        Event.objects.all().delete()  # create_monthly 함수를 실행할때마다 db에 추가되서 임시로 매번 다 삭제
+        # 사용자가 전달한 수정 사항 반영
+        updates = json.loads(request.body)
+        # print(updates["updates"])  # dict
+
+        for key, value in updates["updates"].items():
+            nurse_id, day = key.split('-')
+            day = int(day)
+            wanted_duty = value
+            dict_duties[nurse_id][day - 1] = wanted_duty
 
 
-        # 근무 기록 생성
+        # 근무 기록 DB 저장
         for nurse_pk, duties in dict_duties.items():  
             start_date = datetime.datetime.strptime(date, '%Y-%m')  # datetime 객체로 변환
             nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
@@ -96,44 +132,44 @@ def create_monthly(request, date):
                 Event.objects.create(date=start_date, duty=duty, nurse_id=nurse_pk) 
                 start_date = start_date + datetime.timedelta(days=1)  # 하루 추가
 
-        return redirect('schedule:index')
+        return redirect('schedule:hospital')
+
 
     # 한달 일정 생성
-    example_nurse_info = {
-        2: [2, 0, 0, 0, 0, 0, 2, 0],
-        3: [3, 0, 0, 0, 0, 0, 2, 0],
-        4: [4, 0, 0, 0, 0, 0, 2, 0],
-        5: [5, 0, 0, 0, 0, 0, 2, 0],
-        6: [6, 0, 0, 0, 0, 0, 2, 0],
-        7: [7, 0, 0, 0, 0, 0, 2, 0],
-        8: [8, 0, 0, 0, 0, 0, 2, 0],
-        9: [9, 0, 0, 0, 0, 0, 0, 0],
-        10:[10, 0, 0, 0, 0, 0, 2, 0],
-        11: [11, 0, 0, 0, 0, 0, 2, 0],
-        12: [12, 0, 0, 0, 0, 0, 2, 0],
-        13: [13, 0, 0, 0, 0, 0, 2, 0],
-        14: [14, 0, 0, 0, 0, 0, 2, 0],
-        15: [15, 0, 0, 0, 0, 0, 2, 0],
-        16: [16, 0, 0, 0, 0, 0, 2, 0],
-        17: [17, 0, 0, 0, 0, 0, 2, 0],
-        18: [18, 0, 0, 0, 0, 0, 2, 0],
-        19: [19, 0, 0, 0, 0, 0, 2, 0],
-    }
+    nurse_pk_list = []
+    all_nurse_pk_list = get_user_model().objects.filter(~Q(username='admin')).values('id')
+    for i in range(len(all_nurse_pk_list)):
+        nurse_pk_list.append(all_nurse_pk_list[i]['id'])
 
-    example_nurse_pk_list = []
-    nurse_pk_list = get_user_model().objects.filter(~Q(username='admin')).values('id')
-    for i in range(len(nurse_pk_list)):
-        example_nurse_pk_list.append(nurse_pk_list[i]['id'])
+    # 현재 달의 지난 달 구하기
+    last_month = int(month) - 1
+    lasy_year = int(year)
+    if last_month == 0:
+        last_month = '12'
+        lasy_year = str(lasy_year - 1)
+    else:
+        last_month = str(last_month)
+        lasy_year = str(lasy_year)
+    
+    if len(last_month) == 1:
+        last_month = '0' + last_month
+    
+    print(lasy_year + '-' + last_month)
+    nurse_profile_dict = get_nurse_info(nurse_pk_list)
+    nurse_schedule_dict = get_last_schedule(nurse_pk_list, lasy_year + '-' + last_month)
 
     dict_duties, modified_nurse_info = make_monthly_schedule(
-        nurse_pk_list=example_nurse_pk_list,
-        nurse_info=example_nurse_info,
-        number_of_nurses=18,
-        needed_nurses_per_shift=3,
+        team_list=[1, 2, 3],
+        needed_nurses_shift_by_team=1,
         vacation_info=[],
         current_month=int(month),
-        current_day=1,    
+        current_date=1,
+        nurse_profile_dict= nurse_profile_dict,
+        nurse_last_month_schedule_dict=nurse_schedule_dict,    
         )
+
+    # print(dict_duties)
+
 
     # 한달 일정을 json 파일로 임시 저장
     with open('temp_schedule.json', 'w') as json_file:
@@ -147,7 +183,7 @@ def create_monthly(request, date):
     team_duties = [[], [], []]
     for key, value in dict_duties.items():
         nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
-        team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
+        team_duties[nurse_profile.team - 1].append({(key, nurse_profile.name): value})
 
 
     days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트

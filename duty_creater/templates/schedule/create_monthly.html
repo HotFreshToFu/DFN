@@ -32,20 +32,20 @@
     </thead>
     <tbody>
       {% for team_duty in team_duty_list %}
-        {% for nurse_name, duties in team_duty.items %}
+        {% for nurse_info, duties in team_duty.items %}
         <tr>
-          <td>{{ nurse_name }}</td>
+          <td>{{ nurse_info.1 }}</td>
 
           {% for duty in duties %}
 
           {% if duty == 0 %}
-          <td data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">/</td>
+          <td data-nurse-name="{{ nurse_info.0 }}" data-date="{{ forloop.counter }}" data-target-duty="{{ duty }}" class="duty">/</td>
           {% elif duty == 1 %}
-          <td style="background-color:#2a9d8f;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">D</td>
+          <td style="background-color:#2a9d8f;" data-nurse-name="{{ nurse_info.0 }}" data-date="{{ forloop.counter }}" data-target-duty="{{ duty }}" class="duty">D</td>
           {% elif duty == 2 %}
-          <td style="background-color:#e9c46a;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">E</td>
+          <td style="background-color:#e9c46a;" data-nurse-name="{{ nurse_info.0 }}" data-date="{{ forloop.counter }}" data-target-duty="{{ duty }}" class="duty">E</td>
           {% else %}
-          <td style="background-color:#f4a261;" data-nurse-id="{{ nurse_name }}" data-date="{{ start_date }}" class="duty">N</td>
+          <td style="background-color:#f4a261;" data-nurse-name="{{ nurse_info.0 }}" data-date="{{ forloop.counter }}" data-target-duty="{{ duty }}" class="duty">N</td>
           {% endif %}
 
           {% endfor %}
@@ -60,9 +60,9 @@
 <!--
 <form action="{% url 'schedule:create_monthly' start_date %}" method="POST">
 -->
-<form>
+<form class="confirmForm" data-confirm-date="{{ start_date }}">
   {% csrf_token %}
-  <button class="btn btn-outline-success" style="float: right;">확정</button>
+  <button class="btn btn-outline-success" style="float: right; width: 70px; height: 38px" id="confirmButton">확정</button>
 </form>
 
 <a href="{% url 'schedule:create_monthly' start_date %}">
@@ -81,24 +81,59 @@
   
   duties.forEach(duty => {
     duty.addEventListener('click', function (event) {
-      updates['2'] = updates['2'] ? (updates['2'] + 1) % 3 : 0
-      console.log(event)
-
       const date = event.target.dataset.date
-      axios({
-        method: 'post',
-        url: `http://127.0.0.1:8000/schedule/create/${date}/`,
-        headers: {'X-CSRFToken': csrftoken},
-        data: {updates:updates},
-      })
-        .then(response => {
-          console.log(updates)
-        })
-    })
+      const nurseName = event.target.dataset.nurseName
+      const targetDuty = parseInt(event.target.dataset.targetDuty)
 
+      if (updates[`${nurseName}-${date}`] === undefined) {
+        updates[`${nurseName}-${date}`] = (targetDuty + 1) % 4
+      } else {
+        updates[`${nurseName}-${date}`] = (updates[`${nurseName}-${date}`] + 1) % 4
+      }
+
+      if (updates[`${nurseName}-${date}`] === 0) {
+        duty.style.backgroundColor = '#ffffff'
+        duty.innerText = '/'
+      } else if (updates[`${nurseName}-${date}`] === 1) {
+        duty.style.backgroundColor = '#2a9d8f'
+        duty.innerText = 'D'
+      } else if (updates[`${nurseName}-${date}`] === 2) {
+        duty.style.backgroundColor = '#e9c46a'
+        duty.innerText = 'E'
+      } else if (updates[`${nurseName}-${date}`] === 3) {
+        duty.style.backgroundColor = '#f4a261'
+        duty.innerText = 'N'
+      }
+      console.log(updates)
+    })
   })
 
+  const confirmForm = document.querySelector(".confirmForm")
+  console.log(confirmForm)
+  confirmForm.addEventListener('submit', function (event) {
+    event.preventDefault()
+    const date = event.target.dataset.confirmDate
 
+    const dots = window.setInterval( function() {
+    const wait = document.querySelector('#confirmButton')
+    if ( wait.innerText.length > 4 ) 
+        wait.innerText = "확정"
+    else 
+        wait.innerText += "."
+    }, 300);
+
+    axios({
+      method: 'post',
+      url: `http://127.0.0.1:8000/schedule/create/${date}/`,
+      headers: {'X-CSRFToken': csrftoken},
+      data: {updates:updates},
+    })
+      .then(response => {
+        console.log(updates)
+
+        window.location.href = `/schedule/hospital/${date}`
+      })
+  })
 
 </script>
 {% endblock script %} 
