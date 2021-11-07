@@ -2,62 +2,62 @@
 {% load custom_tags %}
 
 {% block content %}
-<h1>{{ year}}년 {{ month }}월의 듀티</h1>
-
-
-{% for team_duty_list in team_duties %}
-  <table class="table text-center table-hover">
-    <thead>
-      <tr>
-        <th colspan="32">{{ forloop.counter }}팀의 한달 일정</th>
-      </tr>
-      <tr>
-        <td></td>
-        {% for day in days %}  
-        <td>{{ day }}</td>
-        {% endfor %}
-      </tr>
-      <tr>
-        <td></td>
-        {% for weekday in weekdays %}  
-        {% if weekday == 'Sun' %}
-        <td style="color:#e00404;">{{ weekday }}</td>
-        {% elif weekday == 'Sat' %}
-        <td style="color:#0094fe;">{{ weekday }}</td>
-        {% else %}
-        <td>{{ weekday }}</td>
-        {% endif %}
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for team_duty in team_duty_list %}
-        {% for nurse_name, duties in team_duty.items %}
+<div class="p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
+  <h1>{{ year}}년 {{ month }}월의 듀티</h1>
+  {% for team_duty_list in team_duties %}
+    <table class="table text-center table-hover">
+      <thead>
         <tr>
-          {% if request.user.profile.name == nurse_name %}
-          <td class="fw-bolder" style="color: #e76f51;">{{ nurse_name }}</td>
-          {% else %}
-          <td>{{ nurse_name }}</td>
-          {% endif %}
-
-          {% for duty in duties %}
-
-          {% if duty == 0 %}
-          <td data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">/</td>
-          {% elif duty == 1 %}
-          <td style="background-color:#2a9d8f;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">D</td>
-          {% elif duty == 2 %}
-          <td style="background-color:#e9c46a;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">E</td>
-          {% else %}
-          <td style="background-color:#f4a261;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">N</td>
-          {% endif %}
-
-          {% endfor %}
-
+          <th colspan="32">{{ forloop.counter }}팀의 한달 일정</th>
         </tr>
+        <tr>
+          <td></td>
+          {% for day in days %}  
+          <td>{{ day }}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td></td>
+          {% for weekday in weekdays %}  
+          {% if weekday == 'Sun' %}
+          <td style="color:#e00404;">{{ weekday }}</td>
+          {% elif weekday == 'Sat' %}
+          <td style="color:#0094fe;">{{ weekday }}</td>
+          {% else %}
+          <td>{{ weekday }}</td>
+          {% endif %}
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for team_duty in team_duty_list %}
+          {% for nurse_name, duties in team_duty.items %}
+          <tr>
+            {% if request.user.profile.name == nurse_name %}
+            <td class="fw-bolder" style="color: #e76f51;">{{ nurse_name }}</td>
+            {% else %}
+            <td>{{ nurse_name }}</td>
+            {% endif %}
+
+            {% for duty in duties %}
+
+            {% if duty == 0 %}
+            <td data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">/</td>
+            {% elif duty == 1 %}
+            <td style="background-color:#2a9d8f;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">D</td>
+            {% elif duty == 2 %}
+            <td style="background-color:#e9c46a;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">E</td>
+            {% else %}
+            <td style="background-color:#f4a261;" data-date="{{ start_date }}" id="duty-{{ user.pk }}-{{ forloop.counter }}">N</td>
+            {% endif %}
+
+            {% endfor %}
+
+          </tr>
+          {% endfor %}
         {% endfor %}
-      {% endfor %}
-    </tbody>
-  </table>
-{% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+</div>
 {% endblock content %}

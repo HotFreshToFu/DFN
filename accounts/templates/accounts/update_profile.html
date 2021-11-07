@@ -2,8 +2,8 @@
 {% load bootstrap5 %}
 
 {% block content %}
-<div class="d-flex flex-column align-items-center m-5">
-  <div class="w-auto p-5 border rounded">
+<div class="d-flex flex-column align-items-center m-5" style="margin-top: 5rem;">
+  <div class="w-auto p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
     <h1>프로필 수정</h1>
     <hr>
     <form action="{% url 'accounts:update_profile' %}" method="POST">

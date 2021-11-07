@@ -3,60 +3,62 @@
 
 {% block content %}
 <div class="row justify-content-center" style="margin-top: 5rem;">
-  <table class="table text-center w-auto">
-    <thead>
-      <tr>
-        <th colspan="7"><h1>{{ nurse_name }} 간호사의 {{ year }}년 {{ month }}월 듀티</h1></th>
-      </tr>
-      <tr>
-        {% for weekday in weekdays %}  
-        <td class="p-3">{{ weekday }}</td>
+  <div class="p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
+    <table class="table text-center w-auto">
+      <thead>
+        <tr>
+          <th colspan="7"><h1>{{ nurse_name }} 간호사의 {{ year }}년 {{ month }}월 듀티</h1></th>
+        </tr>
+        <tr>
+          {% for weekday in weekdays %}  
+          <td class="p-3">{{ weekday }}</td>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in duties_for_calendar %}
+        <tr>
+
+          {% for day, duty in week %}
+        
+          {% if duty == 0 %}
+          <td class="py-0 border-0" style="text-align: left;">{{ day }}</td>
+          {% elif duty == 1 %}
+          <td class="py-0 border-0" style="background-color:#2a9d8f; text-align: left;">{{ day }}</td>
+          {% elif duty == 2 %}
+          <td class="py-0 border-0" style="background-color:#e9c46a; text-align: left;">{{ day }}</td>
+          {% elif duty == 3 %}
+          <td class="py-0 border-0" style="background-color:#f4a261; text-align: left;">{{ day }}</td>
+          {% else %}
+          <td class="py-0 border-0" style=""></td>
+          {% endif %}
+
+          {% endfor %}
+
+        </tr>
+        <tr>
+
+          {% for day, duty in week %}
+        
+          {% if duty == 0 %}
+          <td class="px-3 pt-0">/</td>
+          {% elif duty == 1 %}
+          <td class="px-3 pt-0" style="background-color:#2a9d8f;">D</td>
+          {% elif duty == 2 %}
+          <td class="px-3 pt-0" style="background-color:#e9c46a;">E</td>
+          {% elif duty == 3 %}
+          <td class="px-3 pt-0" style="background-color:#f4a261;">N</td>
+          {% else %}
+          <td class="px-3 pt-0" style=""></td>
+          {% endif %}
+
+          {% endfor %}
+
+        </tr>
         {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for week in duties_for_calendar %}
-      <tr>
-
-        {% for day, duty in week %}
-      
-        {% if duty == 0 %}
-        <td class="py-0 border-0" style="text-align: left;">{{ day }}</td>
-        {% elif duty == 1 %}
-        <td class="py-0 border-0" style="background-color:#2a9d8f; text-align: left;">{{ day }}</td>
-        {% elif duty == 2 %}
-        <td class="py-0 border-0" style="background-color:#e9c46a; text-align: left;">{{ day }}</td>
-        {% elif duty == 3 %}
-        <td class="py-0 border-0" style="background-color:#f4a261; text-align: left;">{{ day }}</td>
-        {% else %}
-        <td class="py-0 border-0" style=""></td>
-        {% endif %}
-
-        {% endfor %}
-
-      </tr>
-      <tr>
-
-        {% for day, duty in week %}
-      
-        {% if duty == 0 %}
-        <td class="px-3 pt-0">/</td>
-        {% elif duty == 1 %}
-        <td class="px-3 pt-0" style="background-color:#2a9d8f;">D</td>
-        {% elif duty == 2 %}
-        <td class="px-3 pt-0" style="background-color:#e9c46a;">E</td>
-        {% elif duty == 3 %}
-        <td class="px-3 pt-0" style="background-color:#f4a261;">N</td>
-        {% else %}
-        <td class="px-3 pt-0" style=""></td>
-        {% endif %}
-
-        {% endfor %}
-
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock content %}
 

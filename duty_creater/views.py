@@ -13,6 +13,7 @@ from pprint import pprint
 import json
 import datetime
 import calendar
+from .custom_classes.ScheduleManager import ScheduleManager
 
 
 def get_nurse_info(pk_list: list) -> dict:
@@ -62,13 +63,10 @@ def create(request):
     return redirect('schedule:personal', request.user.pk)
 
 
-@require_POST
-def can_create(request, date):
-    flag = True  # 가능
-    
+def duty_exist(request, date):
+    flag = False  # 가능
     if Event.objects.filter(date__startswith=date).exists():
-        flag = False  # 불가능
-
+        flag = True  # 불가능
     context = {
         'flag': flag,
     }
@@ -118,7 +116,7 @@ def create_monthly(request, date):
             start_date = datetime.datetime.strptime(date, '%Y-%m')  # datetime 객체로 변환
             nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
             
-            nurse_profile.OFF = 0  # 임시로 OFF 초기화
+            nurse_profile.OFF = 0  # OFF 초기화
 
             weekdays_idx = 0  # 현재 날짜(int)
             for duty in duties:
@@ -158,17 +156,12 @@ def create_monthly(request, date):
     nurse_profile_dict = get_nurse_info(nurse_pk_list)
     nurse_schedule_dict = get_last_schedule(nurse_pk_list, lasy_year + '-' + last_month)
 
-    dict_duties, modified_nurse_info = make_monthly_schedule(
-        team_list=[1, 2, 3],
-        needed_nurses_shift_by_team=1,
-        vacation_info=[],
-        current_month=int(month),
-        current_date=1,
-        nurse_profile_dict= nurse_profile_dict,
-        nurse_last_month_schedule_dict=nurse_schedule_dict,    
-        )
 
-    # print(dict_duties)
+    current_month = ScheduleManager(team_number_list=[1, 2, 3])
+    current_month.push_nurse_info(nurse_profile_dict)
+    current_month.push_last_schedules(nurse_schedule_dict)
+    current_month.create_monthly_schedule(date=date + '-01')
+    dict_duties = current_month.get_schedule()
 
 
     # 한달 일정을 json 파일로 임시 저장
