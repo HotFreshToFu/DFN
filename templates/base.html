@@ -30,6 +30,11 @@
   <style>
     body {
       font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100%;
+      background-color: rgb(240, 240, 240);
+    }
+    html{
+      height: 100%;
     }
   </style>
   <title>Duty For Nurses</title>
@@ -43,7 +48,7 @@
     <div class="container-fluid">
       <div class="d-flex flex-row">
         <div class="p-1" style="margin-top: 1px;">
-          <a class="navbar-brand mt-1" href="" style="font-family: 'Montserrat', sans-serif; color: #ffffff;">DFN</a>
+          <a class="navbar-brand mt-1" href="{% url 'schedule:index' %}" style="font-family: 'Montserrat', sans-serif; color: #ffffff;">DFN</a>
         </div>
         {% if request.user.is_authenticated %}
         <!-- 나의 듀티 확인 드랍다운 버튼 -->
@@ -143,7 +148,17 @@
     const personalButton = document.querySelector('#personal-duty')
     personalButton.addEventListener('click', function (event) {
       if (pesonalInput.value) {
-        window.location.href = `/schedule/personal/${pesonalInput.dataset.userId}/${pesonalInput.value}/`
+        axios({
+          method: 'get',
+          url: `http://127.0.0.1:8000/schedule/duty-exist/${pesonalInput.value}/`,
+        })
+          .then(response => {
+            if (response.data.flag) {
+              window.location.href = `/schedule/personal/${pesonalInput.dataset.userId}/${pesonalInput.value}/`
+            } else {
+              alert('선택하신 날짜에 듀티가 존재하지 않습니다.')
+            }
+          })
       }
     })
 
@@ -153,7 +168,17 @@
     const teamButton = document.querySelector('#team-duty')
     teamButton.addEventListener('click', function (event) {
       if (teamInput.value) {
-        window.location.href = `/schedule/team/${teamInput.dataset.userTeam}/${teamInput.value}/`
+        axios({
+          method: 'get',
+          url: `http://127.0.0.1:8000/schedule/duty-exist/${teamInput.value}/`,
+        })
+          .then(response => {
+            if (response.data.flag) {
+              window.location.href = `/schedule/team/${teamInput.dataset.userTeam}/${teamInput.value}/`
+            } else {
+              alert('선택하신 날짜에 듀티가 존재하지 않습니다.')
+            }
+          })
       }
     })
 
@@ -162,7 +187,17 @@
     const hospitalButton = document.querySelector('#hospital-duty')
     hospitalButton.addEventListener('click', function (event) {
       if (hospitalInput.value) {
-        window.location.href = `/schedule/hospital/${hospitalInput.value}/`
+        axios({
+          method: 'get',
+          url: `http://127.0.0.1:8000/schedule/duty-exist/${hospitalInput.value}/`,
+        })
+          .then(response => {
+            if (response.data.flag) {
+              window.location.href = `/schedule/hospital/${hospitalInput.value}/`
+            } else {
+              alert('선택하신 날짜에 듀티가 존재하지 않습니다.')
+            }
+          })
       }
     })
   </script>

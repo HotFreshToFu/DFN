@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center m-5">
-  <div class="text-center w-auto p-5 border rounded">
+<div class="row justify-content-center m-5" style="margin-top: 5rem;">
+  <div class="text-center w-auto p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
     <h1>듀티 일정 생성</h1>
     <hr>
     <h3>원하는 달을 선택하세요</h3>
@@ -31,13 +31,13 @@
     if (dateInput.value) {
       axios({
         method: 'post',
-        url: `http://127.0.0.1:8000/schedule/can-create/${dateInput.value}/`,
+        url: `http://127.0.0.1:8000/schedule/duty-exist/${dateInput.value}/`,
         headers: {'X-CSRFToken': csrftoken},
       })
         .then(response => {
           console.log(response)
           console.log(response.data.flag)
-          if (response.data.flag) {
+          if (!response.data.flag) {
             window.location.href = `/schedule/create/${dateInput.value}/`
           } else {
             alert('선택하신 날짜에 이미 듀티가 존재합니다.')
