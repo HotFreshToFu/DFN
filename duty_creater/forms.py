@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
-from .models import Event
+from .models import Event, ScheduleModification
 
 
 class EventForm(forms.ModelForm):
@@ -9,12 +9,16 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        # fields = ('duty',)
         fields = '__all__'
 
-    # https://stackoverflow.com/questions/49640900/using-modelformset-factory-in-a-django-class-based-view
-    # 우연히 찾은건데 form에서 검사를 하네 
-
-
-# EventFormSet = modelformset_factory(Event, fields=('duty',))
 EventFormSet = modelformset_factory(Event, form=EventForm, extra=0)
+
+
+class ScheduleModificationForm(forms.ModelForm):
+    from_date = forms.DateField(label='휴무 시작일', widget=forms.SelectDateWidget())
+    to_date = forms.DateField(label='휴무 종료일', widget=forms.SelectDateWidget())
+
+
+    class Meta:
+        model = ScheduleModification
+        exclude = ('nurse', 'approval', )

@@ -6,14 +6,41 @@
     <h1>듀티 일정 생성</h1>
     <hr>
     <h3>원하는 달을 선택하세요</h3>
-    
+
     <form id="createForm">
       {% csrf_token %}
       <input type="month" id="start" class="rounded" style="border-width:1px; text-align:center; padding:3px; margin:5px; border-style:solid;">
-      <hr>
       <button class="DFN-btn">생성</button>
     </form> 
+    <hr>
 
+    <h4>듀티 수정 요청</h4>
+      <table class="table text-center w-auto table-hover">
+        <thead>
+          <tr>
+            <td>분류</td>
+            <td>간호사</td>
+            <td>시작일</td>
+            <td>종료일</td>
+            <td>비고</td>
+            <td>승인</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for modification in modifications %}
+          <tr class="modificationTrTag" data-start-date="{{ modification.from_date|cut:" " }}" style="display: ;">
+            <td>{{ modification.category }}</td>
+            <td>{{ modification.nurse }}</td>
+            <td>{{ modification.from_date }}</td>
+            <td>{{ modification.to_date }}</td>
+            <td>{{ modification.note }}</td>
+            <td>
+              <input class="" type="checkbox" id="approvalCheck" data-modification="{{ modification.pk }}" data-nurse="{{ modification.nurse.pk }}" data-from-date="{{ modification.from_date|cut:" " }}" data-to-date="{{ modification.to_date|cut:" " }}">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
   </div>
 </div>
 {% endblock content %}
@@ -26,7 +53,46 @@
   const dateInput = document.querySelector('#start')
   
   dateInput.value = year + '-' + month
+  console.log(dateInput.value)
+  const event = new Event('input', {
+      bubbles: true,
+      cancelable: true,
+  })
 
+  dateInput.addEventListener('input', function (event) {
+    console.log(dateInput.value)
+    const modificationTrTags = document.querySelectorAll('.modificationTrTag')
+    modificationTrTags.forEach(modificationTrTag =>{
+      modificationTrTag.setAttribute('style', 'display: none;')
+      console.log(modificationTrTag.dataset.startDate.slice(0, 7))
+      const currentDate = modificationTrTag.dataset.startDate.slice(0, 7)
+
+      if (dateInput.value === currentDate) {
+        modificationTrTag.setAttribute('style', 'display: ;')
+      }
+    })
+  })
+  
+  dateInput.dispatchEvent(event)
+
+  const modifications = {}
+
+  const approvalChecks = document.querySelectorAll('#approvalCheck')
+  approvalChecks.forEach(approvalCheck => {
+    const modificationPk = approvalCheck.dataset.modification
+    modifications[modificationPk] = approvalCheck.checked
+    
+    console.log(approvalCheck.dataset.modification)
+
+    approvalCheck.addEventListener('click', function (event) {
+      console.log(approvalCheck.checked)
+      console.log(event.target.dataset.modification)
+
+      modifications[modificationPk] = approvalCheck.checked
+      console.log(modifications)
+    })
+  })
+  
   createForm.addEventListener('submit', function (event) {
     event.preventDefault()
     if (dateInput.value) {
@@ -36,16 +102,30 @@
         headers: {'X-CSRFToken': csrftoken},
       })
         .then(response => {
-          console.log(response)
-          console.log(response.data.flag)
+          // console.log(response)
+          // console.log(response.data.flag)
+          console.log(modifications)
           if (!response.data.flag) {
-            window.location.href = `/schedule/create/${dateInput.value}/`
+            axios({
+              method: 'post',
+              url: 'http://127.0.0.1:8000/schedule/modify/confirm/',
+              headers: {'X-CSRFToken': csrftoken},
+              data: { modifications: modifications },
+            })
+              .then(response => {
+                console.log(response)
+                window.location.href = `/schedule/create/${dateInput.value}/`
+              })
+
           } else {
             alert('선택하신 날짜에 이미 듀티가 존재합니다.')
           }
         })
       }
   })
+
+
+
 </script>
 {% endblock script %}
 

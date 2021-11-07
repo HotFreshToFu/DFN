@@ -6,13 +6,17 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
 from django.http import JsonResponse, HttpResponse
 from accounts.models import Profile
-from .models import Event
-from .forms import EventForm, EventFormSet
+from .models import Event, ScheduleModification
+from .forms import EventForm, EventFormSet, ScheduleModificationForm
+from .custom_classes.ScheduleManager import ScheduleManager
 from pprint import pprint
 import json
 import datetime
 import calendar
-from .custom_classes.ScheduleManager import ScheduleManager
+from django.core import serializers
+
+
+WEEKDAYS_KO = '일월화수목금토'
 
 
 def get_nurse_info(pk_list: list) -> dict:
@@ -54,12 +58,23 @@ def create(request):
 
     # 스태프 간호사만 일정 생성 가능
     if request.user.is_staff:
+        modifications = ScheduleModification.objects.filter(approval=False).all()
+
         if request.method == "POST":
             start_date = request.POST.get('start')  # 사용자가 선택한 날짜(YY-MM 형식에 str type)
             return redirect('schedule:create_monthly', start_date)
         
-        return render(request, 'schedule/create.html') 
+        context = {
+            'modifications': modifications,
+        }
+        return render(request, 'schedule/create.html', context)
     return redirect('schedule:personal', request.user.pk)
+
+
+def get_schedule_modification(request, date):
+    modifications = ScheduleModification.objects.filter(approval=False).filter(from_date__startswith=date).all()
+    data = serializers.serialize('json', modifications)
+    return HttpResponse(data, content_type='application/json')
 
 
 def duty_exist(request, date):
@@ -91,13 +106,34 @@ def create_monthly(request, date):
     start_date = date + '-01'  # 시작일
     weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
     for _ in range(last_day):
-        weekdays.append(weekday.strftime('%a'))
+        weekdays.append(WEEKDAYS_KO[int(weekday.strftime('%w'))])
         weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
     if request.method == "POST":
+        # 간호사의 휴가, 연차 신청 반영
+        with open('modify_schedule.json') as json_file:
+            modifications = json.load(json_file)
+
+        for schedule_modification_pk, modify in modifications.items():
+            # modify == True인 경우에만 반영
+            if modify:
+                schedule_modification = ScheduleModification.objects.get(pk=schedule_modification_pk)
+
+                # DBd에 승인 수정
+                schedule_modification.approval = True
+                schedule_modification.save()
+
+                # 사용 연차 수 증가
+                if schedule_modification.category == 'PTO':
+                    nurse_profile = Profile.objects.get(user_id=schedule_modification.nurse.pk)
+                    nurse_profile.PTO += 1
+                    nurse_profile.save()
+
+
         # 사용자가 생성하기로 했다면 json 파일을 불러와 이를 DB에 저장
         with open('temp_schedule.json') as json_file:
             dict_duties = json.load(json_file)
+
 
         # 사용자가 전달한 수정 사항 반영
         updates = json.loads(request.body)
@@ -151,14 +187,38 @@ def create_monthly(request, date):
     if len(last_month) == 1:
         last_month = '0' + last_month
     
-    print(lasy_year + '-' + last_month)
+
+    # 간호사의 휴가, 연차 신청 반영
+    with open('modify_schedule.json') as json_file:
+        modifications = json.load(json_file)
+
+    modification_dict = {}
+    for schedule_modification_pk, modify in modifications.items():
+        # modify == True인 경우에만 반영
+        if modify:
+            schedule_modification = ScheduleModification.objects.get(pk=schedule_modification_pk)
+            from_day = int(schedule_modification.from_date.strftime('%d'))  # 시작 날
+            to_day = int(schedule_modification.to_date.strftime('%d'))  # 종료 날
+            day_tuple = tuple(range(from_day, to_day + 1))  # 시작 날에서부터 종료 날까지 모두 담은 튜플
+            modification_dict[schedule_modification.nurse.pk] = day_tuple
+
+            # DBd에 승인 수정
+            schedule_modification.approval = True
+            schedule_modification.save()
+
+            # 사용 연차 수 증가
+            if schedule_modification.category == 'PTO':
+                nurse_profile = Profile.objects.get(user_id=schedule_modification.nurse.pk)
+                nurse_profile.PTO += 1
+                nurse_profile.save()
+
     nurse_profile_dict = get_nurse_info(nurse_pk_list)
     nurse_schedule_dict = get_last_schedule(nurse_pk_list, lasy_year + '-' + last_month)
-
 
     current_month = ScheduleManager(team_number_list=[1, 2, 3])
     current_month.push_nurse_info(nurse_profile_dict)
     current_month.push_last_schedules(nurse_schedule_dict)
+    current_month.push_vacation_info(modification_dict) 
     current_month.create_monthly_schedule(date=date + '-01')
     dict_duties = current_month.get_schedule()
 
@@ -193,20 +253,16 @@ def create_monthly(request, date):
     return render(request, 'schedule/create_monthly.html', context)
 
 
+@require_POST
 def update(request, date):
-    if request.method == 'POST':
-        updates = json.loads(request.body)
-        for key, value in updates["updates"].items():
-            nurse_id, day = key.split('-')
-            if len(day) == 1:
-                day = '0' + day
-            wanted_date = date + '-' + day
-            wanted_duty = value
-            print(wanted_date)
-            duty = Event.objects.filter(date__startswith=wanted_date).filter(nurse_id=nurse_id).update(duty=wanted_duty)
-            print(duty)
-            
-
+    updates = json.loads(request.body)
+    for key, value in updates["updates"].items():
+        nurse_id, day = key.split('-')
+        if len(day) == 1:
+            day = '0' + day
+        wanted_date = date + '-' + day
+        wanted_duty = value
+        duty = Event.objects.filter(date__startswith=wanted_date).filter(nurse_id=nurse_id).update(duty=wanted_duty)
     return redirect('schedule:hospital')
 
 
@@ -286,7 +342,7 @@ def team(request, team_id, date=today):
         start_date = date + '-01'  # 시작일
         weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
         for _ in range(last_day):
-            weekdays.append(weekday.strftime('%a'))
+            weekdays.append(WEEKDAYS_KO[int(weekday.strftime('%w'))])
             weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
         nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
@@ -324,7 +380,7 @@ def hospital(request, date=today):
     start_date = date + '-01'  # 시작일
     weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
     for _ in range(last_day):
-        weekdays.append(weekday.strftime('%a'))
+        weekdays.append(WEEKDAYS_KO[int(weekday.strftime('%w'))])
         weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
     nurse_pks = Profile.objects.filter(team__gt=0).values_list('user_id', flat=True)
@@ -367,3 +423,45 @@ def hospital(request, date=today):
         'existence': existence,
     }
     return render(request, 'schedule/hospital.html', context)
+
+
+
+def create_modification(request):
+    if request.method == 'POST':
+        form = ScheduleModificationForm(request.POST)
+        if form.is_valid():
+            modification_form = form.save(commit=False)
+            modification_form.nurse = request.user
+            modification_form.save()
+            return redirect('schedule:modification', request.user.pk)
+    form = ScheduleModificationForm()
+    context = {
+        'form': form,
+    }
+    return render(request, 'schedule/modify/create_modification.html', context)
+
+
+def modification(request, nurse_pk):
+    modifications = ScheduleModification.objects.filter(nurse_id=nurse_pk).all()
+
+    context = {
+        'modifications': modifications,
+    }
+    return render(request, 'schedule/modify/modification.html', context)
+
+
+def confirm_modification(request):
+    modifications = json.loads(request.body)
+
+    with open('modify_schedule.json', 'w') as json_file:
+        json.dump(modifications['modifications'], json_file)
+
+    return JsonResponse(modifications['modifications'])
+
+
+def all_modification(request):
+    modifications = ScheduleModification.objects.all()
+    context = {
+        'modifications': modifications,
+    }
+    return render(request, 'schedule/modify/all_modification.html', context)

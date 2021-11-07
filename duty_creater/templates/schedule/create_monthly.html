@@ -27,11 +27,11 @@
   -->
   <form class="confirmForm" data-confirm-date="{{ start_date }}">
     {% csrf_token %}
-    <button class="btn btn-outline-success" style="float: right;" id="confirmButton">확정</button>
+    <button class="DFN-btn" style="float: right;" id="confirmButton">확정</button>
   </form>
 
   <a href="{% url 'schedule:create_monthly' start_date %}">
-    <button class="btn btn-outline-success mx-2" style="float: right;">재생성</button>
+    <button class="DFN-btn mx-2" style="float: right;">재생성</button>
   </a>
 
   {% for team_duty_list in team_duties %}
@@ -49,9 +49,9 @@
         <tr>
           <td></td>
           {% for weekday in weekdays %}  
-          {% if weekday == 'Sun' %}
+          {% if weekday == '일' %}
           <td style="color:#e76f51;">{{ weekday }}</td>
-          {% elif weekday == 'Sat' %}
+          {% elif weekday == '토' %}
           <td style="color:#457b9d;">{{ weekday }}</td>
           {% else %}
           <td>{{ weekday }}</td>
@@ -141,7 +141,7 @@
       method: 'post',
       url: `http://127.0.0.1:8000/schedule/create/${date}/`,
       headers: {'X-CSRFToken': csrftoken},
-      data: {updates:updates},
+      data: {updates: updates},
     })
       .then(response => {
         console.log(updates)

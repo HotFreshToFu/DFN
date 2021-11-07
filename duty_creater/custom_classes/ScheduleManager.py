@@ -14,6 +14,7 @@ class ScheduleManager:
         self.priority_stack = []
         self.daily_schedule_stack = []
         self.ideal_schedule_counter = [0, 1, 1, 1]
+        self.recursed_days = 0
         self.current_priorities = dict()
         self.whole_schedule = dict()
         self.nurses_team_dict = dict()
@@ -21,6 +22,9 @@ class ScheduleManager:
         
         for team_number in team_number_list:
             self.team_nurse_dict[team_number] = set()
+
+    def __repr__(self) -> str:
+        return 
 
     def set_needed_nurses_by_team(self, nurses_needed)  -> None:
         """
@@ -42,12 +46,8 @@ class ScheduleManager:
         2) value: list. == [nurse_pk, grade, team_pk, off_count]
         """
         for nurse_pk, grade, team_pk, off_count in nurse_personal_infos.values():
-            manager = PriorityManager()
-            manager.nurse_pk = nurse_pk
-            manager.nurse_grade = grade
-            manager.team_pk = team_pk
-            manager.offs = off_count
-
+            manager = PriorityManager(nurse_pk, grade, team_pk, off_count)
+            
             self.current_priorities[nurse_pk] = manager
             self.team_nurse_dict[team_pk].add(nurse_pk)
             self.nurses_team_dict[nurse_pk] = team_pk
@@ -66,13 +66,23 @@ class ScheduleManager:
         for nurse_pk, schedule in schedules.items():
             self.current_priorities[nurse_pk].personalize(schedule)
 
+    def push_vacation_info(self, vacation_dict) -> None:
+        """
+        
+        """
+        for nurse_pk, vacation_tuple in vacation_dict.items():
+            for date in vacation_tuple:
+                # 인덱스 처리를 위해 date-1
+                self.current_priorities[nurse_pk].vacation_date.add(date - 1)
+
+
     def get_team_info(self, team_number) -> dict:
         """
         # 팀에 속한 간호사들의 PriorityManager값을 딕셔너리 형태로 반환
         1. 매개변수: int
         2. 출력값: team_info_dict -> dict()
         1) key: nurse_pk
-        2) value: PriorityManager object 
+        2) value: PrioritManager object 
         """
         team_info_dict = dict()
         for nurse_pk in self.team_nurse_dict[team_number]:
@@ -87,10 +97,9 @@ class ScheduleManager:
         
         current_day = 0
         last_day = monthrange(year, month)[1]
-        recured_by = 0
         remade_same_date = 0
 
-        while current_day < last_day and recured_by < 40:
+        while current_day < last_day and self.recursed_days < 40:
             validation_token = 1
             todays_schedule = [[] for _ in range(4)]
 
@@ -105,10 +114,11 @@ class ScheduleManager:
                         for nurse_pk in team_schedule[shift]:
                             todays_schedule[shift].append(nurse_pk)
                     validation_token |= team.pop_grade_validation_token()
-                else:
-                    validation_token = 1
 
-            if validation_token == 15:
+                else:   # validation 토큰을 무조건 틀린 값으로 설정. 
+                    validation_token = 25
+
+            if validation_token == 15:      # 1111
                 self.priority_stack.append(self.current_priorities)
                 self.daily_schedule_stack.append(todays_schedule)
                 self.update_nurse_priority_manager(todays_schedule)
@@ -116,16 +126,10 @@ class ScheduleManager:
                 current_day += 1
             
             elif remade_same_date == 10:
-                
-                if current_day:
-                    current_day -= 1
-                    self.current_priorities = self.priority_stack.pop()
-                
+                current_day -= self.recurse_schedule(current_day)
                 remade_same_date = 0
-                recured_by += 1
-                print(f'recursed_by {recured_by}')
+                print(f'recursed_by {self.recursed_days}')
                 
-
             else:
                 remade_same_date += 1
         
@@ -161,12 +165,48 @@ class ScheduleManager:
 
         self.whole_schedule = schedule_dict
 
+    def recurse_schedule(self, recurse_time) -> int:
+        """
+        매개변수:
+        1. 현재 작성중인 날짜.
+        반환값:
+        1. 실제로 돌
+        """
+        self.recursed_days += 1
+
+        if not recurse_time:
+            return 0
+        
+        # 8번째 시도마다 '맨 처음'으로 돌아간다
+        print(self.recursed_days)
+        if self.recursed_days % 5 == 0:
+            print(self.recursed_days)
+            self.current_priorities = self.priority_stack[0]
+            self.priority_stack.clear()
+            self.daily_schedule_stack.clear()
+            return recurse_time
+
+        # 최대 6일 전까지 돌아간다. 
+        if recurse_time > 6:
+            recurse_time = 6
+
+        for _ in range(recurse_time):
+            self.current_priorities = self.priority_stack.pop()
+            self.daily_schedule_stack.pop()
+
+        return recurse_time
+
     def get_stack(self) -> list:
         return self.daily_schedule_stack
 
     def get_schedule(self) -> dict:
         return self.whole_schedule
+    
+    # def set_recursion_option(self, )
 
+    
+
+    # 디버깅용 기능들
     def print_schedule_by_day(self) -> None:
         for day in range(len(self.daily_schedule_stack)):
             print(f'day{day+1}: {self.daily_schedule_stack[day]}')
@@ -230,9 +270,9 @@ class DailyManager:
 
 
     def build_schedule(self, nurse_priority_infos, date) -> list:
-        # while문 주의!!!!
         is_validate = False
         recursed_by = 0
+
         while not is_validate and recursed_by < 50:
             
             self.build_priority_que(nurse_priority_infos, date)

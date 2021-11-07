@@ -3,13 +3,13 @@ from random import randrange
 
 class PriorityManager:
     
-    def __init__(self):
-        self.nurse_pk = 0
-        self.team_pk = 0
-        self.nurse_grade = 0
+    def __init__(self, nurse_pk, grade, team_pk, off_count):
+        self.nurse_pk = nurse_pk
+        self.team_pk = team_pk
+        self.nurse_grade = grade
         self.monthly_shift = 0
         self.monthly_night_shift = 0
-        self.offs = 0
+        self.offs = off_count
         self.last_shift = 0
         self.shift_streaks = 2
         self.weekly_shift = 0
@@ -17,8 +17,10 @@ class PriorityManager:
         self.vacation_date = set()
 
     def __repr__(self) -> str:
-        return f'pk:{self.nurse_pk}, team:{self.team_pk}, grade:{self.nurse_grade} monthly_shift:{self.monthly_night_shift}, last_weeks_schedule: {self.weekly_schedule}'
-
+        basic_infos = f'pk:{self.nurse_pk}, team:{self.team_pk}, grade:{self.nurse_grade} monthly_shift:{self.monthly_night_shift}'
+        last_weeks_schedule = f'last_weeks_schedule: {self.weekly_schedule}'
+        return basic_infos + '\n' +  last_weeks_schedule
+        
     def personalize(self, last_schedule):
 
         # 1. weekly_schedule 개인화.
@@ -110,9 +112,15 @@ class PriorityManager:
         # # 1) 연속 근무
         # (1) shift_streak 2 미만
         # 예상 값: 300 ~ 700
-        if shift == self.last_shift and self.shift_streaks < 2:
+        if shift and shift == self.last_shift and self.shift_streaks < 2:
             priority_token += randrange(400, 800)
     
+        # # 추가 주 5일 이상 일했을 때 
+        # 근무 할 확률이 줄어듦. 
+        if shift and self.weekly_shift >= 5:
+            multipliyer = self.weekly_shift - 4
+            priority_token -= randrange(200, 500) * multipliyer
+
         # # (2) shift_streak 2 이상
         # # 예상 값: 500 ~ 850
         if shift == self.last_shift and self.shift_streaks >= 2:
@@ -122,6 +130,10 @@ class PriorityManager:
         # # (3) 2연속 근무 후 근무하려고 
         if shift == self.last_shift + 1 and self.shift_streaks >= 2:
             priority_token += randrange(400, 800)
+
+        # 
+        if not shift:
+            priority_token -= 600
 
 
         return -priority_token

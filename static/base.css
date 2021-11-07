@@ -15,3 +15,17 @@
   border: 1px solid;
   background-color: #264653;
 }
+
+.DFN-checkbox:checked {
+  border-color: red;
+}
+
+:checked {
+  border-color: red;
+  margin-left: 25px;
+  border: 1px solid blue;
+}
+
+input[type="checkbox"]:checked {
+  box-shadow: 0 0 0 3px hotpink;
+}
