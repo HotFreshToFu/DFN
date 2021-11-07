@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
 from django.http import JsonResponse, HttpResponse
 from accounts.models import Profile
-from .make_schedule import make_monthly_schedule
 from .models import Event
 from .forms import EventForm, EventFormSet
 from pprint import pprint
@@ -42,8 +41,8 @@ def get_last_schedule(pk_list: list, date: str) -> dict:
 
 @require_safe
 def index(request):
-    if request.user.is_authenticated:
-        return redirect('schedule:personal', request.user.pk)
+    # if request.user.is_authenticated:
+    #     return redirect('schedule:personal', request.user.pk)
     return render(request, 'schedule/index.html')
 
 
@@ -195,21 +194,20 @@ def create_monthly(request, date):
 
 
 def update(request, date):
-    wanted_events = Event.objects.filter(date__startswith=date).all().order_by('date')
-    
     if request.method == 'POST':
-        formset = EventFormSet(request.POST)
-        if formset.is_valid():
-            formset.save()
-            return redirect('schedule:create', '2020-01')  # 임시
+        updates = json.loads(request.body)
+        for key, value in updates["updates"].items():
+            nurse_id, day = key.split('-')
+            if len(day) == 1:
+                day = '0' + day
+            wanted_date = date + '-' + day
+            wanted_duty = value
+            print(wanted_date)
+            duty = Event.objects.filter(date__startswith=wanted_date).filter(nurse_id=nurse_id).update(duty=wanted_duty)
+            print(duty)
+            
 
-    else:
-        formset = EventFormSet(queryset=wanted_events)
-    context = {
-        'formset': formset,
-        'date': date
-    }
-    return render(request, 'schedule/update.html', context)
+    return redirect('schedule:hospital')
 
 
 today = datetime.datetime.today().strftime('%Y-%m')  # 현재 달
@@ -221,37 +219,48 @@ def personal(request, nurse_pk, date=today):
     last_day = calendar.monthrange(int(year), int(month))[1]  # 해당 달의 마지막 날
     nurse_name = Profile.objects.filter(user_id=nurse_pk).values('name')[0]['name']
     duties = list(Event.objects.filter(date__startswith=date).filter(nurse_id=nurse_pk).values_list('duty', flat=True))
-
-    start_date = date + '-01'  # 시작일
-    start_weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d').weekday() + 1  # 시작 요일
-    duties_for_calendar = [[-1] * (start_weekday) + duties[: (7 - start_weekday)]]
-    day_idx = 7 - start_weekday
-    while day_idx < last_day:
-        if last_day - day_idx <= 7:
-            duties_for_calendar.append(duties[day_idx: ])
-            break
-        duties_for_calendar.append(duties[day_idx: day_idx + 7 ])
-        day_idx += 7
     
-    # 달력에 일과 함께 출력하기 위해 duties_for_calendar의 모든 원소를 일과 함께 튜플로 다시 만듦
-    day = 1
-    for week_idx in range(len(duties_for_calendar)):
-        for day_idx in range(len(duties_for_calendar[week_idx])):
-            if duties_for_calendar[week_idx][day_idx] == -1:
-                duties_for_calendar[week_idx][day_idx] = (0, duties_for_calendar[week_idx][day_idx])
-            else:
-                duties_for_calendar[week_idx][day_idx] = (day, duties_for_calendar[week_idx][day_idx])
-                day += 1
+    # 해당 날짜에 듀티가 존재하는지 여부 검사
+    existence = False
+    if duties:
+        existence = True  # 듀티가 존재한다
 
-    weekdays = ['일', '월', '화', '수', '목', '금', '토']
+        start_date = date + '-01'  # 시작일
+        start_weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d').weekday() + 1  # 시작 요일
+        duties_for_calendar = [[-1] * (start_weekday) + duties[: (7 - start_weekday)]]
+        day_idx = 7 - start_weekday
+        while day_idx < last_day:
+            if last_day - day_idx <= 7:
+                duties_for_calendar.append(duties[day_idx: ])
+                break
+            duties_for_calendar.append(duties[day_idx: day_idx + 7 ])
+            day_idx += 7
+        
+        # 달력에 일과 함께 출력하기 위해 duties_for_calendar의 모든 원소를 일과 함께 튜플로 다시 만듦
+        day = 1
+        for week_idx in range(len(duties_for_calendar)):
+            for day_idx in range(len(duties_for_calendar[week_idx])):
+                if duties_for_calendar[week_idx][day_idx] == -1:
+                    duties_for_calendar[week_idx][day_idx] = (0, duties_for_calendar[week_idx][day_idx])
+                else:
+                    duties_for_calendar[week_idx][day_idx] = (day, duties_for_calendar[week_idx][day_idx])
+                    day += 1
 
+        weekdays = ['일', '월', '화', '수', '목', '금', '토']
+
+        context = {
+            'existence': existence,
+            'month': month,
+            'year': year,
+            'nurse_name': nurse_name,
+            'date': date,
+            'duties_for_calendar': duties_for_calendar,
+            'weekdays': weekdays,
+        }
+        return render(request, 'schedule/personal.html', context)
+    
     context = {
-        'month': month,
-        'year': year,
-        'nurse_name': nurse_name,
-        'date': date,
-        'duties_for_calendar': duties_for_calendar,
-        'weekdays': weekdays,
+        'existence': existence,
     }
     return render(request, 'schedule/personal.html', context)
 
@@ -264,30 +273,43 @@ def team(request, team_id, date=today):
 
     nurse_pks = Profile.objects.filter(team=team_id).values_list('user_id', flat=True)
     dict_duties = get_last_schedule(nurse_pks, date)
-    
-    weekdays = []  # date-01 부터 date-last_day까지 요일 저장 리스트
-    start_date = date + '-01'  # 시작일
-    weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
-    for _ in range(last_day):
-        weekdays.append(weekday.strftime('%a'))
-        weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
-    nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
-    for nurse_pk in dict_duties:
-        nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
-        nurse_names.append((nurse_pk, nurse_profile.name))
+    # 해당 날짜에 듀티가 존재하는지 여부 검사
+    existence = False
+    for value in dict_duties.values():
+        if value:  # 듀티가 있음
+            existence = True
+            break
 
-    days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
+    if existence:
+        weekdays = []  # date-01 부터 date-last_day까지 요일 저장 리스트
+        start_date = date + '-01'  # 시작일
+        weekday = datetime.datetime.strptime(start_date, '%Y-%m-%d')  # datetime 객체로 변환
+        for _ in range(last_day):
+            weekdays.append(weekday.strftime('%a'))
+            weekday = weekday + datetime.timedelta(days=1)  # 하루 추가
 
+        nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
+        for nurse_pk in dict_duties:
+            nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
+            nurse_names.append((nurse_pk, nurse_profile.name))
+
+        days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
+
+        context = {
+            'existence': existence,
+            'days': days,
+            'month': month,
+            'year': year,
+            'team_id': team_id,
+            'nurse_names': nurse_names,
+            'date': date,
+            'weekdays': weekdays,
+            'dict_duties': dict_duties,
+        }
+        return render(request, 'schedule/team.html', context)
     context = {
-        'days': days,
-        'month': month,
-        'year': year,
-        'team_id': team_id,
-        'nurse_names': nurse_names,
-        'date': date,
-        'weekdays': weekdays,
-        'dict_duties': dict_duties,
+        'existence': existence,
     }
     return render(request, 'schedule/team.html', context)
 
@@ -308,27 +330,40 @@ def hospital(request, date=today):
     nurse_pks = Profile.objects.filter(team__gt=0).values_list('user_id', flat=True)
     dict_duties = get_last_schedule(nurse_pks, date)
 
-    nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
-    for nurse_pk in dict_duties:
-        nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
-        nurse_names.append((nurse_pk, nurse_profile.name))
+    # 해당 날짜에 듀티가 존재하는지 여부 검사
+    existence = False
+    for value in dict_duties.values():
+        if value:  # 듀티가 있음
+            existence = True
+            break
 
-    team_duties = [[], [], []]
-    for key, value in dict_duties.items():
-        nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
-        team_duties[nurse_profile.team - 1].append({nurse_profile.name: value})
+    if existence:
+        nurse_names = []  # 간호사 이름 저장 [(pk, 이름), ...]
+        for nurse_pk in dict_duties:
+            nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
+            nurse_names.append((nurse_pk, nurse_profile.name))
+
+        team_duties = [[], [], []]
+        for key, value in dict_duties.items():
+            nurse_profile = Profile.objects.get(user_id=key)  # 간호사 프로필 객체
+            team_duties[nurse_profile.team - 1].append({(key, nurse_profile.name): value})
 
 
-    days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
+        days = list(range(1, last_day + 1))  # 템플릿 출력용 일(day) 리스트
 
+        context = {
+            'existence': existence,
+            'days': days,
+            'month': month,
+            'year': year,
+            'start_date': date,
+            'weekdays': weekdays,
+            'nurse_names': nurse_names,
+            'dict_duties': dict_duties,
+            'team_duties': team_duties,
+        }
+        return render(request, 'schedule/hospital.html', context)
     context = {
-        'days': days,
-        'month': month,
-        'year': year,
-        'start_date': date,
-        'weekdays': weekdays,
-        'nurse_names': nurse_names,
-        'dict_duties': dict_duties,
-        'team_duties': team_duties,
+        'existence': existence,
     }
     return render(request, 'schedule/hospital.html', context)

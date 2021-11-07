@@ -29,7 +29,7 @@ class ProfileForm(forms.ModelForm):
         label='레벨',
         max_value = 2,
         min_value = 0,
-        initial=2
+        initial=0
     )
 
     class Meta:

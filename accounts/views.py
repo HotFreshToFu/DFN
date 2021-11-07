@@ -46,27 +46,27 @@ def profile(request, nurse_pk):
     return render(request, 'accounts/profile.html', context)
 
 
-@require_http_methods(['GET', 'POST'])
-def create_profile(request):
-    if request.user.is_authenticated:
-        # 이미 프로필이 존재하는 사용자
-        if Profile.objects.filter(user_id=request.user.pk).exists():
-            return redirect('accounts:profile', request.user.pk)
+# @require_http_methods(['GET', 'POST'])
+# def create_profile(request):
+#     if request.user.is_authenticated:
+#         # 이미 프로필이 존재하는 사용자
+#         if Profile.objects.filter(user_id=request.user.pk).exists():
+#             return redirect('accounts:profile', request.user.pk)
         
-        if request.method == 'POST':
-            form = ProfileForm(request.POST)
-            if form.is_valid:
-                profile = form.save(commit=False)
-                profile.user = request.user
-                profile.save()
-                return redirect('accounts:profile', request.user.pk)
-        else:
-            form = ProfileForm()
-        context = {
-            'form': form,
-        }
-        return render(request, 'accounts/create_profile.html', context)
-    return redirect('accounts:login')
+#         if request.method == 'POST':
+#             form = ProfileForm(request.POST)
+#             if form.is_valid:
+#                 profile = form.save(commit=False)
+#                 profile.user = request.user
+#                 profile.save()
+#                 return redirect('accounts:profile', request.user.pk)
+#         else:
+#             form = ProfileForm()
+#         context = {
+#             'form': form,
+#         }
+#         return render(request, 'accounts/create_profile.html', context)
+#     return redirect('accounts:login')
 
 
 @require_http_methods(['GET', 'POST'])
@@ -119,19 +119,28 @@ def signup(request):
         return redirect('schedule:index')
 
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
+        user_creation_form = CustomUserCreationForm(request.POST)
+        profile_form = ProfileForm(request.POST)
+        if user_creation_form.is_valid() and profile_form.is_valid():
+            user = user_creation_form.save()
+
+            profile = profile_form.save(commit=False)
+            profile.user = user
+            profile.save()
+
             auth_login(request, user)
-            form = ProfileForm()
-            context = {
-                'form': form,
-            }
-            return render(request, 'accounts/create_profile.html', context)
+            return redirect('accounts:profile', request.user.pk)
+            # user_creation_form = ProfileForm()
+            # context = {
+            #     'user_creation_form': user_creation_form,
+            # }
+            # return render(request, 'accounts/create_profile.html', context)
     else:
-        form = CustomUserCreationForm()
+        user_creation_form = CustomUserCreationForm()
+        profile_form = ProfileForm()
     context = {
-        'form': form,
+        'user_creation_form': user_creation_form,
+        'profile_form': profile_form,
     }
     return render(request, 'accounts/signup.html', context)
 

@@ -4,6 +4,7 @@
 {% block content %}
 <div class="row justify-content-center" style="margin-top: 5rem;">
   <div class="p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
+    {% if existence %}
     <table class="table text-center w-auto">
       <thead>
         <tr>
@@ -11,7 +12,13 @@
         </tr>
         <tr>
           {% for weekday in weekdays %}  
-          <td class="p-3">{{ weekday }}</td>
+          {% if weekday == '일' %}
+          <td style="color:#e76f51;" class='p-3'>{{ weekday }}</td>
+          {% elif weekday == '토' %}
+          <td style="color:#457b9d;" class='p-3'>{{ weekday }}</td>
+          {% else %}
+          <td class='p-3'>{{ weekday }}</td>
+          {% endif %}
           {% endfor %}
         </tr>
       </thead>
@@ -58,6 +65,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+    <h2>선택하신 날의 듀티가 존재하지 않습니다</h2>
+    {% endif %}
   </div>
 </div>
 {% endblock content %}

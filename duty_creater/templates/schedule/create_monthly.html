@@ -50,9 +50,9 @@
           <td></td>
           {% for weekday in weekdays %}  
           {% if weekday == 'Sun' %}
-          <td style="color:#e00404;">{{ weekday }}</td>
+          <td style="color:#e76f51;">{{ weekday }}</td>
           {% elif weekday == 'Sat' %}
-          <td style="color:#0094fe;">{{ weekday }}</td>
+          <td style="color:#457b9d;">{{ weekday }}</td>
           {% else %}
           <td>{{ weekday }}</td>
           {% endif %}
@@ -133,7 +133,6 @@
   confirmForm.addEventListener('submit', function (event) {
     event.preventDefault()
     const loading = document.querySelector('#loading')
-    document.documentElement.scrollTop = 0
     loading.style.display = 'block'
 
     const date = event.target.dataset.confirmDate
@@ -146,7 +145,7 @@
     })
       .then(response => {
         console.log(updates)
-        window.location.href = `/schedule/hospital/${date}`
+        window.location.href = `/schedule/hospital/${date}/`
       })
   })
 
