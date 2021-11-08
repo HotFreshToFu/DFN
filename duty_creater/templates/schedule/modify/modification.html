@@ -24,7 +24,11 @@
       <tbody>
         {% for modification in modifications %}
         <tr>
-          <td>{{ modification.category }}</td>
+          {% if modification.category == 'PTO' %}
+          <td>연차</td>
+          {% else %}
+          <td>휴가</td>
+          {% endif %}
           <td>{{ modification.from_date }}</td>
           <td>{{ modification.to_date }}</td>
           <td>{{ modification.note }}</td>

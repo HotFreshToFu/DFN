@@ -4,7 +4,8 @@
 {% block content %}
 <div class="d-flex flex-column align-items-center" style="margin-top: 5rem;">
   <div class="w-auto p-5" style="background-color: #ffffff; width: auto; border-radius: 30px">
-    <h1>듀티 수정 요청</h1>
+    <h1>전체 휴무 요청 목록</h1>
+    <hr>
     <table class="table text-center w-auto table-hover">
       <thead>
         <tr>
@@ -19,7 +20,11 @@
       <tbody>
         {% for modification in modifications %}
         <tr>
-          <td>{{ modification.category }}</td>
+          {% if modification.category == 'PTO' %}
+          <td>연차</td>
+          {% else %}
+          <td>휴가</td>
+          {% endif %}
           <td>{{ modification.nurse }}</td>
           <td>{{ modification.from_date }}</td>
           <td>{{ modification.to_date }}</td>

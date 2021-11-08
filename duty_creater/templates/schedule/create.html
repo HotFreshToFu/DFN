@@ -14,7 +14,7 @@
     </form> 
     <hr>
 
-    <h4>듀티 수정 요청</h4>
+    <h4>휴무 요청</h4>
       <table class="table text-center w-auto table-hover">
         <thead>
           <tr>
@@ -29,7 +29,11 @@
         <tbody>
           {% for modification in modifications %}
           <tr class="modificationTrTag" data-start-date="{{ modification.from_date|cut:" " }}" style="display: ;">
-            <td>{{ modification.category }}</td>
+            {% if modification.category == 'PTO' %}
+            <td>연차</td>
+            {% else %}
+            <td>휴가</td>
+            {% endif %}
             <td>{{ modification.nurse }}</td>
             <td>{{ modification.from_date }}</td>
             <td>{{ modification.to_date }}</td>

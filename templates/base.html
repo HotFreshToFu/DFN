@@ -106,6 +106,9 @@
         </div>
         {% if request.user.is_staff %}
         <div class="p-1" style="margin-top: 1px;">
+          <a href="{% url 'schedule:all_modification' %}" class="me-2 text-decoration-none align-middle text-white" style="color: #264653;">휴무 신청 목록</a>
+        </div>
+        <div class="p-1" style="margin-top: 1px;">
           <a href="{% url 'schedule:create' %}" class="me-2 text-decoration-none align-middle text-white" style="color: #264653;">새로운 듀티 만들기</a>
         </div>
         {% endif %}

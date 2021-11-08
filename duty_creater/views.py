@@ -126,8 +126,11 @@ def create_monthly(request, date):
                 # 사용 연차 수 증가
                 if schedule_modification.category == 'PTO':
                     nurse_profile = Profile.objects.get(user_id=schedule_modification.nurse.pk)
+                    print(nurse_profile.PTO)
+                    print('add PTO')
                     nurse_profile.PTO += 1
                     nurse_profile.save()
+                    print(nurse_profile.PTO)
 
 
         # 사용자가 생성하기로 했다면 json 파일을 불러와 이를 DB에 저장
@@ -151,19 +154,21 @@ def create_monthly(request, date):
             start_date = datetime.datetime.strptime(date, '%Y-%m')  # datetime 객체로 변환
             nurse_profile = Profile.objects.get(user_id=nurse_pk)  # 간호사 프로필 객체
             
-            nurse_profile.OFF = 0  # OFF 초기화
+            OFF_cnt = 0
 
             weekdays_idx = 0  # 현재 날짜(int)
             for duty in duties:
                 # OFF 갱신
-                if duty > 0 and (weekdays[weekdays_idx] == 'Sun' or weekdays[weekdays_idx] == 'Sat'):
-                    nurse_profile.OFF += 1
-                    nurse_profile.save()
+                if duty > 0 and (weekdays[weekdays_idx] == '일' or weekdays[weekdays_idx] == '토'):
+                    OFF_cnt += 1
                 weekdays_idx += 1
 
                 # Event 생성
                 Event.objects.create(date=start_date, duty=duty, nurse_id=nurse_pk) 
                 start_date = start_date + datetime.timedelta(days=1)  # 하루 추가
+
+            nurse_profile.OFF = OFF_cnt
+            nurse_profile.save()
 
         return redirect('schedule:hospital')
 
@@ -202,15 +207,6 @@ def create_monthly(request, date):
             day_tuple = tuple(range(from_day, to_day + 1))  # 시작 날에서부터 종료 날까지 모두 담은 튜플
             modification_dict[schedule_modification.nurse.pk] = day_tuple
 
-            # DBd에 승인 수정
-            schedule_modification.approval = True
-            schedule_modification.save()
-
-            # 사용 연차 수 증가
-            if schedule_modification.category == 'PTO':
-                nurse_profile = Profile.objects.get(user_id=schedule_modification.nurse.pk)
-                nurse_profile.PTO += 1
-                nurse_profile.save()
 
     nurse_profile_dict = get_nurse_info(nurse_pk_list)
     nurse_schedule_dict = get_last_schedule(nurse_pk_list, lasy_year + '-' + last_month)
@@ -425,7 +421,7 @@ def hospital(request, date=today):
     return render(request, 'schedule/hospital.html', context)
 
 
-
+@require_http_methods(['GET', 'POST'])
 def create_modification(request):
     if request.method == 'POST':
         form = ScheduleModificationForm(request.POST)
@@ -441,13 +437,14 @@ def create_modification(request):
     return render(request, 'schedule/modify/create_modification.html', context)
 
 
-def modification(request, nurse_pk):
-    modifications = ScheduleModification.objects.filter(nurse_id=nurse_pk).all()
 
+def modification(request, nurse_pk):
+    modifications = ScheduleModification.objects.filter(nurse_id=nurse_pk).all().order_by('-pk')
     context = {
         'modifications': modifications,
     }
     return render(request, 'schedule/modify/modification.html', context)
+
 
 
 def confirm_modification(request):
@@ -459,8 +456,9 @@ def confirm_modification(request):
     return JsonResponse(modifications['modifications'])
 
 
+
 def all_modification(request):
-    modifications = ScheduleModification.objects.all()
+    modifications = ScheduleModification.objects.all().order_by('-pk')
     context = {
         'modifications': modifications,
     }

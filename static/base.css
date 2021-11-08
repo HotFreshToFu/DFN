@@ -16,16 +16,14 @@
   background-color: #264653;
 }
 
+/* 
 .DFN-checkbox:checked {
-  border-color: red;
+  background-color: #264653;
 }
-
 :checked {
-  border-color: red;
-  margin-left: 25px;
-  border: 1px solid blue;
-}
+  background-color: #264653;
+} */
 
-input[type="checkbox"]:checked {
-  box-shadow: 0 0 0 3px hotpink;
-}
+/* input[type="checkbox"]:checked {
+  background-color: #264653;
+} */
